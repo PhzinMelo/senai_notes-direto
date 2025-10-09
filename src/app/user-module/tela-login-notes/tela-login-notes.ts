@@ -65,13 +65,14 @@ export class TelaLoginNotes implements OnInit {
     this.sucessoErrorMessage = '';
     this.incorretoErrorMessage = '';
 
-    const { email, password } = this.loginForm.value;
+    const { email, senha } = this.loginForm.value;
+    
 
     try {
-      const response = await fetch('https://senai-gpt-api.azurewebsites.net/login', {
+      const response = await fetch('http://senainotes-g3edp.us-east-1.elasticbeanstalk.com/git api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, senha }),
       });
 
       if (response.ok) {
@@ -97,3 +98,4 @@ export class TelaLoginNotes implements OnInit {
     this.router.navigate(['/new-user-notes']);
   }
 }
+ 
