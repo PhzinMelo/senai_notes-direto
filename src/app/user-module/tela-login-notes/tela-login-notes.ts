@@ -69,7 +69,7 @@ export class TelaLoginNotes implements OnInit {
     
 
     try {
-      const response = await fetch('http://senainotes-g3edp.us-east-1.elasticbeanstalk.com/git api/auth', {
+      const response = await fetch('http://senainotes-g3edp.us-east-1.elasticbeanstalk.com/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, senha }),
