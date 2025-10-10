@@ -74,30 +74,34 @@
       <div 
         *ngFor="let note of notasFiltradas"
         class="note-card"
-        [class.selected]="notaSelecionada?.id === note.id"
+        [class.selected]="notaSelecionada?.idNota === note.idNota"
         (click)="onNoteClick(note)">
         
         <img 
-          *ngIf="note.imagemUrl" 
-          [src]="note.imagemUrl" 
+          *ngIf="note.urlImg && note.urlImg.trim() !== ''" 
+          [src]="note.urlImg" 
           alt="Imagem da nota" 
-          class="note-card-banner">
+          class="note-card-banner"
+          (error)="note.urlImg = ''">
 
         <div class="note-card-content">
           <div class="note-card-header">
             <div class="note-card-icon"></div>
             <div class="note-card-info">
-              <h3 class="note-title">{{ note.titulo }}</h3>
+              <h3 class="note-title">{{ extrairTitulo(note.descricao || '') }}</h3>
+              <p class="note-preview" *ngIf="extrairConteudo(note.descricao || '')">
+                {{ extrairConteudo(note.descricao || '') }}
+              </p>
             </div>
           </div>
           
           <div class="note-tags">
-            <span *ngFor="let tag of note.tags" class="note-tag">
-              {{ tag }}
+            <span *ngFor="let tag of note.tag" class="note-tag">
+              {{ tag.nomeTag }}
             </span>
           </div>
           
-          <p class="note-date">{{ formatarData(note.dataEdicao) }}</p>
+          <p class="note-date">{{ formatarData(note.dataUpdate) }}</p>
         </div>
       </div>
     </div>
@@ -114,7 +118,8 @@
     <ng-container *ngIf="!modoEdicao && !modoCriacao">
       <div class="note-detail-actions">
         <button class="action-icon-btn" (click)="modoEdicao = true" title="Edit Note"><fa-icon [icon]="faPenToSquare"></fa-icon></button>
-        <button class="action-icon-btn" title="Archive Note">
+        <!-- ✅ SUBSTITUIÇÃO FEITA: Botão Archive agora funciona -->
+        <button class="action-icon-btn" (click)="arquivarNota()" title="Archive Note">
           <fa-icon [icon]="faBox"></fa-icon>
         </button>
         <button class="action-icon-btn danger" (click)="deletarNota()" title="Delete Note">
@@ -122,16 +127,19 @@
         </button>
       </div>
 
-      <img 
-        *ngIf="notaSelecionada?.imagemUrl" 
-        [src]="notaSelecionada?.imagemUrl" 
-        alt="Imagem da nota selecionada" 
-        class="note-detail-banner">
+      <!-- ✅ CORREÇÃO: Imagem com tratamento de erro seguro -->
+      <div *ngIf="notaSelecionada?.urlImg && (notaSelecionada?.urlImg?.trim() !== '')" class="image-container">
+        <img 
+          [src]="notaSelecionada?.urlImg" 
+          alt="Imagem da nota selecionada" 
+          class="note-detail-banner"
+          (error)="notaSelecionada && (notaSelecionada.urlImg = '')">
+      </div>
 
       <div class="note-detail-content">
         <div class="note-detail-header">
           <div class="note-detail-icon"></div>
-          <h2 class="note-detail-title">{{ notaSelecionada?.titulo }}</h2>
+          <h2 class="note-detail-title">{{ extrairTitulo(notaSelecionada?.descricao || '') }}</h2>
         </div>
 
         <div class="note-metadata">
@@ -139,8 +147,8 @@
             <span class="metadata-icon">🏷️</span>
             <span class="metadata-label">Tags</span>
             <div class="metadata-tags">
-              <span *ngFor="let tag of notaSelecionada?.tags" class="metadata-tag">
-                {{ tag }}
+              <span *ngFor="let tag of notaSelecionada?.tag" class="metadata-tag">
+                {{ tag.nomeTag }}
               </span>
             </div>
           </div>
@@ -148,12 +156,12 @@
           <div class="metadata-item">
             <span class="metadata-icon">🕐</span>
             <span class="metadata-label">Last edited</span>
-            <span class="metadata-value">{{ formatarData(notaSelecionada?.dataEdicao) }}</span>
+            <span class="metadata-value">{{ formatarData(notaSelecionada?.dataUpdate) }}</span>
           </div>
         </div>
 
         <h3 class="content-title">Content:</h3>
-        <div class="note-content-text">{{ getDescricao() }}</div>
+        <div class="note-content-text">{{ extrairConteudo(notaSelecionada?.descricao || '') }}</div>
       </div>
     </ng-container>
 
@@ -190,6 +198,15 @@
             class="form-input"
             placeholder="https://example.com/image.jpg"
             [formControl]="imagemUrlControl">
+          
+          <div *ngIf="imagemUrlControl.value && imagemUrlControl.value.trim() !== ''" class="image-preview">
+            <img 
+              [src]="imagemUrlControl.value" 
+              alt="Pré-visualização" 
+              class="preview-image"
+              (error)="imagemUrlControl.setValue('')">
+            <small class="preview-text">Image preview</small>
+          </div>
         </div>
 
         <div class="form-group">

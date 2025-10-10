@@ -28,15 +28,7 @@ export class TelaLoginNotes implements OnInit {
 
   ngOnInit(): void {
     const savedTheme = localStorage.getItem('theme');
-
-    // Define como padrão o modo claro
-    if (savedTheme) {
-      this.isDarkMode = savedTheme === 'dark';
-    } else {
-      this.isDarkMode = false; // Começa no claro
-      localStorage.setItem('theme', 'light');
-    }
-
+    this.isDarkMode = savedTheme === 'dark';
     this.updateTheme();
   }
 
@@ -50,8 +42,8 @@ export class TelaLoginNotes implements OnInit {
     document.body.classList.toggle('dark-mode', this.isDarkMode);
   }
 
-
   async onLoginClick(): Promise<void> {
+    // validação do form
     if (this.loginForm.invalid) {
       const emailVal = this.loginForm.get('email')?.value;
       const passVal = this.loginForm.get('password')?.value;
@@ -60,37 +52,60 @@ export class TelaLoginNotes implements OnInit {
       return;
     }
 
+    // limpa mensagens
     this.emailErrorMessage = '';
     this.passwordErrorMessage = '';
     this.sucessoErrorMessage = '';
     this.incorretoErrorMessage = '';
 
-    const { email, senha } = this.loginForm.value;
-    
+    const email = this.loginForm.get('email')?.value;
+    const senha = this.loginForm.get('password')?.value;
 
     try {
+      console.log('Tentando login com:', { email });
+
       const response = await fetch('http://senainotes-g3edp.us-east-1.elasticbeanstalk.com/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, senha }),
       });
 
+      console.log('Status da resposta (login):', response.status);
+
       if (response.ok) {
         const json = await response.json();
-        const meuToken = json.accessToken;
-        const meuId = json.user?.id;
+        console.log('Resposta do /api/auth:', json);
 
-        localStorage.setItem('meuToken', meuToken ?? '');
-        if (meuId != null) localStorage.setItem('meuId', String(meuId));
+        // salva token, id e email no localStorage
+        const token = json.token ?? json.accessToken ?? '';
+        const usuario = json.usuario ?? json.user ?? null;
+        const usuarioId = usuario?.id ?? usuario?.idUsuario ?? null;
+        const usuarioEmail = usuario?.email ?? email;
+
+        localStorage.setItem('meuToken', token);
+        if (usuarioId != null) localStorage.setItem('meuId', String(usuarioId));
+        if (usuarioEmail) localStorage.setItem('meuEmail', usuarioEmail);
 
         this.sucessoErrorMessage = 'Login realizado com sucesso!';
-        this.router.navigate(['/all-notes']); // ✅ redirecionamento correto
+        console.log('Token salvo em localStorage (meuToken):', token);
+        console.log('meuId / meuEmail salvos em localStorage:', usuarioId, usuarioEmail);
+
+        // redireciona (pequeno delay para mostrar a mensagem)
+        setTimeout(() => {
+          this.router.navigate(['/all-notes']);
+        }, 800);
+      } else if (response.status === 401) {
+        this.incorretoErrorMessage = 'E-mail ou senha incorretos (401).';
+      } else if (response.status === 400) {
+        this.incorretoErrorMessage = 'Requisição inválida (400).';
       } else {
-        this.incorretoErrorMessage = 'E-mail ou senha incorretos.';
+        const text = await response.text();
+        console.error('Erro inesperado no login:', response.status, text);
+        this.incorretoErrorMessage = 'Erro inesperado no login. Veja o console.';
       }
     } catch (err) {
-      console.error(err);
-      this.incorretoErrorMessage = 'Erro de conexão. Tente novamente.';
+      console.error('Erro na requisição de login:', err);
+      this.incorretoErrorMessage = 'Erro de conexão. Verifique sua internet.';
     }
   }
 
@@ -98,4 +113,3 @@ export class TelaLoginNotes implements OnInit {
     this.router.navigate(['/new-user-notes']);
   }
 }
- 

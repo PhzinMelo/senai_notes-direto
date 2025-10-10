@@ -690,3 +690,117 @@
   border-color: #5a84f2 ;
   box-shadow: 0 0 0 2px rgba(90, 132, 242, 0.2);
 }
+/* ========== MELHORIAS PARA IMAGENS ========== */
+
+/* Imagem no card da listagem */
+.note-card-banner {
+  width: 100%;
+  height: 160px; /* Aumentei um pouco a altura */
+  object-fit: cover;
+  object-position: center;
+  background-color: #f8f9fa;
+  border-radius: 12px 12px 0 0;
+  transition: transform 0.3s ease;
+}
+
+.note-card:hover .note-card-banner {
+  transform: scale(1.05); /* Efeito zoom suave no hover */
+}
+
+/* Imagem na visualização detalhada */
+.note-detail-banner {
+  width: 100%;
+  height: 280px; /* Mais alta para destaque */
+  object-fit: cover;
+  object-position: center;
+  background: linear-gradient(45deg, #f8f9fa, #e9ecef); /* Gradiente de fallback */
+  border-radius: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Container para imagem com overflow controlado */
+.image-container {
+  width: 100%;
+  overflow: hidden;
+  border-radius: 0;
+  margin-bottom: 0;
+}
+
+/* Pré-visualização no formulário - MUITO MELHORADA */
+.image-preview {
+  margin-top: 12px;
+  text-align: center;
+  padding: 16px;
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  border: 2px dashed #dadce0;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.image-preview:hover {
+  border-color: #4285f4;
+  background: linear-gradient(135deg, #e8f0fe, #d2e3fc);
+}
+
+.preview-image {
+  max-width: 100%;
+  max-height: 220px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.preview-image:hover {
+  transform: scale(1.02);
+}
+
+.preview-text {
+  display: block;
+  margin-top: 8px;
+  color: #5f6368;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Indicador de loading para imagens */
+.image-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ========== DARK MODE PARA IMAGENS ========== */
+::ng-deep body.dark-mode .note-card-banner {
+  background-color: #2b2d38;
+}
+
+::ng-deep body.dark-mode .note-detail-banner {
+  background: linear-gradient(45deg, #2b2d38, #323544);
+}
+
+::ng-deep body.dark-mode .image-preview {
+  background: linear-gradient(135deg, #2b2d38, #323544);
+  border-color: #3a3c47;
+}
+
+::ng-deep body.dark-mode .image-preview:hover {
+  border-color: #5a84f2;
+  background: linear-gradient(135deg, #323544, #3a3c47);
+}
+
+::ng-deep body.dark-mode .preview-image {
+  border-color: #3a3c47;
+}
+
+::ng-deep body.dark-mode .preview-text {
+  color: #9a9aa0;
+}

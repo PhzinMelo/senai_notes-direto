@@ -5,347 +5,447 @@ import { firstValueFrom } from 'rxjs';
 import { ChangeDetectorRef } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import { faBox, faPenToSquare, faHouse, faUser, faMoon, faSun } from '@fortawesome/free-solid-svg-icons';
+import { faTrash, faBox, faPenToSquare, faHouse, faUser, faMoon, faSun } from '@fortawesome/free-solid-svg-icons';
 
-// Interface que define o formato de uma Nota
 interface INote {
-  id?: number;
+  idNota?: number;
   titulo: string;
   descricao: string;
-  usuarioId: number;
+  dataCriacao?: string;
+  dataUpdate?: string;
+  status: boolean;
+  urlImg?: string;
+  usuario?: {
+    idUsuario: number;
+    email: string;
+  };
+  notaTag?: Array<{
+    id: {
+      idAnotacao: number;
+      idTag: number;
+    };
+    idAnotacao: string;
+    idTag: {
+      idTag: number;
+      nomeTag: string;
+    };
+  }>;
+}
+
+interface INotaRequest {
+  titulo: string;
+  descricao: string;
+  status: boolean;
+  urlImg?: string;
+  idUsuario: number;
   tags: string[];
-  imagemUrl?: string;
-  dataEdicao?: string;
+}
+
+interface INotaListagem {
+  idNota: number;
+  email: string;
+  descricao: string;
+  dataCriacao: string;
+  dataUpdate: string;
+  status: boolean;
+  urlImg?: string;
+  idUsuario: number;
+  usuario: {
+    id: number;
+    email: string;
+  };
+  tag: Array<{
+    idTag: number;
+    nomeTag: string;
+  }>;
 }
 
 @Component({
   selector: 'app-all-notes',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, FontAwesomeModule],
-  templateUrl:'./all-notes.html',
+  templateUrl: './all-notes.html',
   styleUrls: ['./all-notes.css']
 })
 export class AllNotes {
   faTrash = faTrash;
-  faBox= faBox
-  faPenToSquare=faPenToSquare
-  faHouse=faHouse
-  faUser=faUser
-  faMoon=faMoon
-  faSun=faSun
-  
-  // URL da API mockada
-  private apiUrl = 'http://localhost:3000/notas';
+  faBox = faBox;
+  faPenToSquare = faPenToSquare;
+  faHouse = faHouse;
+  faUser = faUser;
+  faMoon = faMoon;
+  faSun = faSun;
 
-  // Lista de notas carregadas da API
-  notes: INote[] = [];
+  private baseUrl = 'http://senainotes-g3edp.us-east-1.elasticbeanstalk.com';
 
-  // Nota atualmente selecionada
-  notaSelecionada: INote | null = null;
-
-  // Modos de operação
+  notes: INotaListagem[] = [];
+  notaSelecionada: INotaListagem | null = null;
   modoEdicao: boolean = false;
   modoCriacao: boolean = false;
 
-  // Controles de formulário
   tituloControl = new FormControl("");
   conteudoControl = new FormControl("");
   tagsControl = new FormControl("");
   imagemUrlControl = new FormControl("");
 
-  // Filtros
   tagsFiltradas: string[] = [];
   termoBusca = new FormControl("");
-
-  // Lista de todas as tags disponíveis
   todasTags: string[] = [];
-
-  // Modo de visualização
   viewMode: 'list' | 'archived' = 'list';
-
-  // Dark mode
   darkMode: boolean = false;
 
-  // ID do usuário logado
-  usuarioLogadoId: number = 1;
+  usuarioLogadoEmail: string = '';
+  usuarioLogadoId: number = 0;
 
-  constructor(
-    private http: HttpClient,
-    private cd: ChangeDetectorRef
-  ) {}
+  // Separador para título e conteúdo
+  private readonly separador = '\n\n--- CONTEÚDO ---\n\n';
+
+  constructor(private http: HttpClient, private cd: ChangeDetectorRef) {}
 
   ngOnInit() {
+    this.carregarUsuarioLogado();
     this.getNotes();
-    
-    // Carrega preferência de dark mode
-    let darkModeLocalStorage = localStorage.getItem("darkMode");
-    if (darkModeLocalStorage == "true") {
+
+    const darkModeLocalStorage = localStorage.getItem("darkMode");
+    if (darkModeLocalStorage === "true") {
       this.darkMode = true;
       document.body.classList.toggle("dark-mode", this.darkMode);
     }
-
     console.log("🚀 Componente All Notes inicializado!");
-    console.log("📡 API URL:", this.apiUrl);
+    console.log("📡 API URL:", this.baseUrl);
   }
 
-  // Método auxiliar para obter descrição (evita erro com caracteres especiais)
-  getDescricao(): string {
-    return this.notaSelecionada?.descricao || '';
-  }
+  private carregarUsuarioLogado() {
+    const emailSalvo = localStorage.getItem("meuEmail");
+    const idSalvo = localStorage.getItem("meuId");
 
-  // Busca as notas da API
-  async getNotes() {
-    try {
-      console.log("📥 Buscando notas da API...");
-      
-      const response = await firstValueFrom(
-        this.http.get<INote[]>(this.apiUrl)
-      );
+    if (emailSalvo) {
+      this.usuarioLogadoEmail = emailSalvo;
+      console.log("👤 Email carregado:", this.usuarioLogadoEmail);
+    } else {
+      console.warn("⚠️ Nenhum email encontrado no localStorage");
+    }
 
-      console.log("✅ Notas recebidas:", response);
-
-      // Filtra apenas as notas do usuário logado
-      this.notes = response.filter(note => note.usuarioId === this.usuarioLogadoId);
-      
-      console.log("📝 Notas filtradas do usuário:", this.notes);
-      
-      this.extrairTodasTags();
-      this.cd.detectChanges();
-    } catch (error) {
-      console.error("❌ Erro ao buscar notas:", error);
-      alert("Não foi possível carregar as notas. Verifique se a API está rodando em http://localhost:3000");
+    if (idSalvo) {
+      this.usuarioLogadoId = Number(idSalvo);
+      console.log("🔑 ID carregado:", this.usuarioLogadoId);
+    } else {
+      console.warn("⚠️ Nenhum ID encontrado no localStorage");
     }
   }
 
-  // Extrai todas as tags únicas das notas
+  // Extrair título da descrição
+  extrairTitulo(descricao: string): string {
+    if (!descricao) return 'Sem título';
+
+    if (descricao.includes(this.separador)) {
+      return descricao.split(this.separador)[0].trim();
+    }
+
+    const primeiraLinha = descricao.split('\n')[0].trim();
+    return primeiraLinha.length > 0
+      ? (primeiraLinha.length > 60 ? primeiraLinha.substring(0, 60) + '...' : primeiraLinha)
+      : 'Sem título';
+  }
+
+  // Extrair conteúdo da descrição
+  extrairConteudo(descricao: string): string {
+    if (!descricao) return '';
+
+    if (descricao.includes(this.separador)) {
+      const partes = descricao.split(this.separador);
+      return partes.length > 1 ? partes[1].trim() : '';
+    }
+
+    const linhas = descricao.split('\n');
+    return linhas.length > 1 ? linhas.slice(1).join('\n').trim() : '';
+  }
+
+  // Combinar título e conteúdo para salvar
+  combinarTituloConteudo(titulo: string, conteudo: string): string {
+    const tituloLimpo = titulo?.trim() || '';
+    const conteudoLimpo = conteudo?.trim() || '';
+
+    if (!tituloLimpo && !conteudoLimpo) return '';
+    if (!conteudoLimpo) return tituloLimpo;
+    if (!tituloLimpo) return conteudoLimpo;
+
+    return `${tituloLimpo}${this.separador}${conteudoLimpo}`;
+  }
+
+  private getAuthHeaders() {
+    return {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + (localStorage.getItem("meuToken") || '')
+    };
+  }
+
+  async getNotes() {
+    try {
+      console.log("📥 Buscando notas do email:", this.usuarioLogadoEmail);
+      const url = `${this.baseUrl}/notes/nota/email/${this.usuarioLogadoEmail}`;
+      const response = await firstValueFrom(
+        this.http.get<INotaListagem[]>(url, { headers: this.getAuthHeaders() })
+      );
+
+      console.log("✅ Notas recebidas:", response);
+      this.notes = this.viewMode === 'list'
+        ? response.filter(note => note.status === true)
+        : response.filter(note => note.status === false);
+
+      this.extrairTodasTags();
+
+      setTimeout(() => this.cd.detectChanges());
+      
+    } catch (error) {
+      console.error("❌ Erro ao buscar notas:", error);
+      alert("Não foi possível carregar as notas. Verifique se a API está disponível.");
+    }
+  }
+
   extrairTodasTags() {
     const tagsSet = new Set<string>();
-    this.notes.forEach(note => {
-      note.tags.forEach(tag => tagsSet.add(tag));
-    });
+    this.notes.forEach(note => note.tag?.forEach(tag => tagsSet.add(tag.nomeTag)));
     this.todasTags = Array.from(tagsSet).sort();
     console.log("🏷️ Tags disponíveis:", this.todasTags);
   }
 
-  // Quando o usuário clica em uma nota
-  onNoteClick(nota: INote) {
+  onNoteClick(nota: INotaListagem) {
     console.log("👆 Nota clicada:", nota);
-    
     this.notaSelecionada = nota;
     this.modoEdicao = false;
     this.modoCriacao = false;
+
+    // ✅ CORREÇÃO: Garantir que extraímos título e conteúdo corretamente
+    const titulo = this.extrairTitulo(nota.descricao || '');
+    const conteudo = this.extrairConteudo(nota.descricao || '');
     
-    // Preenche os campos com os dados da nota
-    this.tituloControl.setValue(nota.titulo);
-    this.conteudoControl.setValue(nota.descricao);
-    this.tagsControl.setValue(nota.tags.join(", "));
-    this.imagemUrlControl.setValue(nota.imagemUrl || "");
-    
-    this.cd.detectChanges();
+    this.tituloControl.setValue(titulo);
+    this.conteudoControl.setValue(conteudo);
+
+    const tags = nota.tag?.map(t => t.nomeTag) || [];
+    this.tagsControl.setValue(tags.join(", "));
+    this.imagemUrlControl.setValue(nota.urlImg || "");
+
+    setTimeout(() => this.cd.detectChanges());
   }
 
-  // Inicia modo de criação de nova nota
   criarNovaNota() {
     console.log("➕ Iniciando criação de nova nota...");
-    
     this.modoCriacao = true;
     this.modoEdicao = false;
     this.notaSelecionada = null;
-    
-    // Limpa os campos
+
     this.tituloControl.setValue("");
     this.conteudoControl.setValue("");
     this.tagsControl.setValue("");
     this.imagemUrlControl.setValue("");
   }
 
-  // Cancela edição ou criação
   cancelar() {
     console.log("❌ Cancelando operação...");
-    
     this.modoCriacao = false;
     this.modoEdicao = false;
-    
-    if (this.notaSelecionada) {
-      this.onNoteClick(this.notaSelecionada);
-    }
+    if (this.notaSelecionada) this.onNoteClick(this.notaSelecionada);
   }
 
-  // Salva nota (cria nova ou atualiza existente)
   async salvarNota() {
-    const titulo = this.tituloControl.value?.trim();
-    const conteudo = this.conteudoControl.value?.trim();
-    const tagsString = this.tagsControl.value?.trim();
-    
-    if (!titulo || !conteudo) {
-      alert("Título e conteúdo são obrigatórios!");
+    const titulo = this.tituloControl.value?.trim() || '';
+    const conteudo = this.conteudoControl.value?.trim() || '';
+    const tagsString = this.tagsControl.value?.trim() || '';
+    const imagemUrl = this.imagemUrlControl.value?.trim() || '';
+
+    if (!titulo && !conteudo) {
+      alert("Título ou conteúdo são obrigatórios!");
       return;
     }
 
-    // Processa as tags
-    const tags = tagsString 
-      ? tagsString.split(",").map(tag => tag.trim()).filter(tag => tag)
-      : [];
-
-    const imagemUrl = this.imagemUrlControl.value?.trim() || "";
+    const descricaoCompleta = this.combinarTituloConteudo(titulo, conteudo);
+    const tags = tagsString ? tagsString.split(",").map(tag => tag.trim()).filter(tag => tag) : [];
+    const headers = this.getAuthHeaders();
 
     try {
       if (this.modoCriacao) {
-        // ========== CRIAR NOVA NOTA ==========
         console.log("💾 Criando nova nota...");
-        
-        const novaNota: INote = {
-          titulo: titulo,
-          descricao: conteudo,
-          tags: tags,
-          imagemUrl: imagemUrl,
-          usuarioId: this.usuarioLogadoId,
-          dataEdicao: new Date().toISOString()
+        const novaNota: INotaRequest = {
+          titulo: titulo || "Nova Nota",
+          descricao: descricaoCompleta,
+          status: true,
+          urlImg: imagemUrl,
+          idUsuario: this.usuarioLogadoId,
+          tags
         };
 
         console.log("📤 Dados a serem enviados:", novaNota);
 
-        // POST - json-server vai gerar o ID automaticamente
-        const notaCriada = await firstValueFrom(
-          this.http.post<INote>(this.apiUrl, novaNota)
-        );
+        const url = `${this.baseUrl}/notes/nota`;
+        const notaCriada = await firstValueFrom(this.http.post<INote>(url, novaNota, { headers }));
 
         console.log("✅ Nota criada com sucesso:", notaCriada);
         alert("Nota criada com sucesso!");
-        
+
       } else if (this.notaSelecionada) {
-        // ========== ATUALIZAR NOTA EXISTENTE ==========
-        console.log("✏️ Atualizando nota ID:", this.notaSelecionada.id);
-        
-        const notaAtualizada: INote = {
-          id: this.notaSelecionada.id,
-          titulo: titulo,
-          descricao: conteudo,
-          tags: tags,
-          imagemUrl: imagemUrl,
-          usuarioId: this.usuarioLogadoId,
-          dataEdicao: new Date().toISOString()
+        console.log("✏️ Atualizando nota ID:", this.notaSelecionada.idNota);
+        const notaAtualizada: INotaRequest = {
+          titulo: titulo || "Nota Atualizada",
+          descricao: descricaoCompleta,
+          status: true,
+          urlImg: imagemUrl,
+          idUsuario: this.usuarioLogadoId,
+          tags
         };
 
         console.log("📤 Dados da atualização:", notaAtualizada);
 
-        // PUT - atualiza a nota completa
-        await firstValueFrom(
-          this.http.put<INote>(
-            `${this.apiUrl}/${this.notaSelecionada.id}`,
-            notaAtualizada
-          )
-        );
+        const url = `${this.baseUrl}/notes/nota/${this.notaSelecionada.idNota}`;
+        const resposta = await firstValueFrom(this.http.put<INote>(url, notaAtualizada, { headers }));
 
-        console.log("✅ Nota atualizada com sucesso!");
+        console.log("✅ Nota atualizada com sucesso:", resposta);
         alert("Nota atualizada com sucesso!");
       }
 
-      // Recarrega as notas
+      // ✅ CORREÇÃO: Recarregar as notas e resetar estados
       await this.getNotes();
       this.modoCriacao = false;
       this.modoEdicao = false;
-      
-    } catch (error) {
+      this.notaSelecionada = null;
+
+    } catch (error: any) {
       console.error("❌ Erro ao salvar nota:", error);
-      alert("Não foi possível salvar a nota. Verifique o console para mais detalhes.");
+      
+      // ✅ MELHOR TRATAMENTO DE ERRO
+      if (error.status === 401) {
+        alert("Sessão expirada. Faça login novamente.");
+        this.logout();
+      } else {
+        alert(`Não foi possível salvar a nota. Erro: ${error.message || 'Desconhecido'}`);
+      }
     }
   }
 
-  // Deleta a nota selecionada
   async deletarNota() {
-    if (!this.notaSelecionada || !this.notaSelecionada.id) return;
+    if (!this.notaSelecionada || !this.notaSelecionada.idNota) {
+      alert("Nenhuma nota selecionada para deletar!");
+      return;
+    }
 
-    const confirmacao = confirm(`Tem certeza que deseja deletar a nota "${this.notaSelecionada.titulo}"?`);
+    const descricao = this.notaSelecionada.descricao || '';
+    const tituloNota = this.extrairTitulo(descricao);
+    const confirmacao = confirm(`Tem certeza que deseja deletar a nota "${tituloNota}"?\nEsta ação não pode ser desfeita.`);
+
     if (!confirmacao) return;
 
-    console.log("🗑️ Deletando nota ID:", this.notaSelecionada.id);
+    console.log("🗑️ Deletando nota ID:", this.notaSelecionada.idNota);
+    const headers = this.getAuthHeaders();
 
     try {
-      // DELETE - remove a nota do json-server
-      await firstValueFrom(
-        this.http.delete(`${this.apiUrl}/${this.notaSelecionada.id}`)
-      );
+      const url = `${this.baseUrl}/notes/nota/${this.notaSelecionada.idNota}`;
+      await firstValueFrom(this.http.delete(url, { headers }));
 
       console.log("✅ Nota deletada com sucesso!");
       alert("Nota deletada com sucesso!");
       
+      // ✅ CORREÇÃO: Resetar estados após deletar
+      this.notaSelecionada = null;
+      this.modoEdicao = false;
+      await this.getNotes();
+
+    } catch (error: any) {
+      console.error("❌ Erro ao deletar nota:", error);
+      
+      if (error.status === 401) {
+        alert("Sessão expirada. Faça login novamente.");
+        this.logout();
+      } else if (error.status === 404) {
+        alert("Nota não encontrada. Ela pode já ter sido deletada.");
+        await this.getNotes(); // Recarregar lista
+      } else {
+        alert(`Não foi possível deletar a nota. Erro: ${error.message || 'Desconhecido'}`);
+      }
+    }
+  }
+
+  // ✅ NOVO MÉTODO: Arquivar nota
+  async arquivarNota() {
+    if (!this.notaSelecionada || !this.notaSelecionada.idNota) {
+      alert("Nenhuma nota selecionada para arquivar!");
+      return;
+    }
+
+    const tituloNota = this.extrairTitulo(this.notaSelecionada.descricao || '');
+    const confirmacao = confirm(`Deseja arquivar a nota "${tituloNota}"?`);
+
+    if (!confirmacao) return;
+
+    const headers = this.getAuthHeaders();
+
+    try {
+      const notaAtualizada: INotaRequest = {
+        titulo: this.extrairTitulo(this.notaSelecionada.descricao || ''),
+        descricao: this.notaSelecionada.descricao || '',
+        status: false, // ✅ false = arquivada
+        urlImg: this.notaSelecionada.urlImg || '',
+        idUsuario: this.usuarioLogadoId,
+        tags: this.notaSelecionada.tag?.map(t => t.nomeTag) || []
+      };
+
+      const url = `${this.baseUrl}/notes/nota/${this.notaSelecionada.idNota}`;
+      await firstValueFrom(this.http.put<INote>(url, notaAtualizada, { headers }));
+
+      console.log("📦 Nota arquivada com sucesso!");
+      alert("Nota arquivada com sucesso!");
+      
       this.notaSelecionada = null;
       await this.getNotes();
-      
-    } catch (error) {
-      console.error("❌ Erro ao deletar nota:", error);
-      alert("Não foi possível deletar a nota.");
+
+    } catch (error: any) {
+      console.error("❌ Erro ao arquivar nota:", error);
+      alert(`Não foi possível arquivar a nota. Erro: ${error.message || 'Desconhecido'}`);
     }
   }
 
-  // Getter para notas filtradas
-  get notasFiltradas(): INote[] {
+  get notasFiltradas(): INotaListagem[] {
     let notas = this.notes;
-
-    // Filtro de busca
-    const termo = this.termoBusca.value?.toLowerCase();
+    const termo = this.termoBusca.value?.toLowerCase() || '';
     if (termo) {
-      notas = notas.filter(note => 
-        note.titulo.toLowerCase().includes(termo) ||
-        note.descricao.toLowerCase().includes(termo) ||
-        note.tags.some(tag => tag.toLowerCase().includes(termo))
-      );
+      notas = notas.filter(note => note.descricao?.toLowerCase().includes(termo) || note.tag?.some(tag => tag.nomeTag.toLowerCase().includes(termo)));
     }
-
-    // Filtro de tags
     if (this.tagsFiltradas.length > 0) {
-      notas = notas.filter(note =>
-        this.tagsFiltradas.every(tag => note.tags.includes(tag))
-      );
+      notas = notas.filter(note => this.tagsFiltradas.every(tag => note.tag?.some(noteTag => noteTag.nomeTag === tag)));
     }
-
-    // Ordena por data de edição (mais recente primeiro)
-    return notas.sort((a, b) => {
-      const dataA = a.dataEdicao ? new Date(a.dataEdicao).getTime() : 0;
-      const dataB = b.dataEdicao ? new Date(b.dataEdicao).getTime() : 0;
-      return dataB - dataA;
-    });
+    return notas.sort((a, b) => new Date(b.dataUpdate).getTime() - new Date(a.dataUpdate).getTime());
   }
 
-  // Toggle filtro de tag
   toggleTagFilter(tag: string) {
     const index = this.tagsFiltradas.indexOf(tag);
-    if (index > -1) {
-      this.tagsFiltradas.splice(index, 1);
-      console.log("🏷️ Tag removida do filtro:", tag);
-    } else {
-      this.tagsFiltradas.push(tag);
-      console.log("🏷️ Tag adicionada ao filtro:", tag);
-    }
+    if (index > -1) this.tagsFiltradas.splice(index, 1);
+    else this.tagsFiltradas.push(tag);
   }
 
-  // Formata data para exibição
   formatarData(data?: string): string {
     if (!data) return 'Sem data';
-    
-    const date = new Date(data);
-    return date.toLocaleDateString('pt-BR', { 
-      day: '2-digit', 
-      month: 'short', 
-      year: 'numeric' 
-    });
+    return new Date(data).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
   }
 
-  // Toggle dark mode
+  temImagem(nota: INotaListagem): boolean {
+    return !!nota.urlImg && nota.urlImg.trim() !== '';
+  }
+
+  toggleViewMode() {
+    this.viewMode = this.viewMode === 'list' ? 'archived' : 'list';
+    this.getNotes();
+  }
+
   ligarDesligarDarkMode() {
     this.darkMode = !this.darkMode;
     document.body.classList.toggle("dark-mode", this.darkMode);
     localStorage.setItem("darkMode", this.darkMode.toString());
-    console.log("🌓 Dark mode:", this.darkMode ? "ativado" : "desativado");
   }
 
-  // Logout
   logout() {
-    console.log("👋 Fazendo logout...");
     localStorage.removeItem("meuToken");
     localStorage.removeItem("meuId");
+    localStorage.removeItem("meuEmail");
     window.location.href = "login";
   }
 }
