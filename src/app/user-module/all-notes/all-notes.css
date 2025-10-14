@@ -610,7 +610,8 @@
 ::ng-deep body.dark-mode button,
 ::ng-deep body.dark-mode .note-card,
 ::ng-deep body.dark-mode .action-icon-btn,
-::ng-deep body.dark-mode .create-note-button {
+::ng-deep body.dark-mode .create-note-button
+ {
   background-color: #2b2d38 !important;
   border: 1px solid #3a3c47 !important;
   color: #e0e0e0 !important;
@@ -640,6 +641,8 @@
 ::ng-deep body.dark-mode .search-input,
 ::ng-deep body.dark-mode .note-details,
 ::ng-deep body.dark-mode .note-metadata,
+::ng-deep body.dark-mode .metadata-tag,
+::ng-deep body.dark-mode  .notes-container,
 ::ng-deep body.dark-mode .metadata-tag,
 ::ng-deep body.dark-mode  .notes-container{
   background-color: #232530 !important;
@@ -689,4 +692,7 @@
 ::ng-deep body.dark-mode .search-input:focus {
   border-color: #5a84f2 ;
   box-shadow: 0 0 0 2px rgba(90, 132, 242, 0.2);
+}
+::ng-deep body.dark-mode .form-section-title{ 
+  color: white;
 }
