@@ -65,23 +65,24 @@ export class TelaLoginNotes implements OnInit {
     this.sucessoErrorMessage = '';
     this.incorretoErrorMessage = '';
 
-    const { email, senha } = this.loginForm.value;
+    const { email, password } = this.loginForm.value;
     
 
     try {
-      const response = await fetch('http://senainotes-g3edp.us-east-1.elasticbeanstalk.com/api/auth', {
+      const response = await fetch('https://backend-senainotes.onrender.com/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, senha }),
+        body: JSON.stringify({ email, password }),
       });
 
+      const json = await response.json();
       if (response.ok) {
-        const json = await response.json();
-        const meuToken = json.accessToken;
-        const meuId = json.user?.id;
+        
+        const meuToken = json.data?.token;
+        const meuId = json.data?.user?.id;
 
-        localStorage.setItem('meuToken', meuToken ?? '');
-        if (meuId != null) localStorage.setItem('meuId', String(meuId));
+      localStorage.setItem('meuToken', meuToken ?? '');
+      if (meuId) localStorage.setItem('meuId', meuId);
 
         this.sucessoErrorMessage = 'Login realizado com sucesso!';
         this.router.navigate(['/all-notes']); // ✅ redirecionamento correto

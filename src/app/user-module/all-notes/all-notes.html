@@ -7,8 +7,8 @@
     </div>
 
     <nav class="sidebar-nav">
-      <button 
-        class="nav-item" 
+      <button
+        class="nav-item"
         [class.active]="viewMode === 'list'"
         (click)="viewMode = 'list'">
         <span class="nav-icon">
@@ -18,7 +18,7 @@
         <span class="nav-arrow">›</span>
       </button>
 
-      <button 
+      <button
         class="nav-item"
         [class.active]="viewMode === 'archived'"
         (click)="viewMode = 'archived'">
@@ -32,7 +32,7 @@
     <div class="tags-section">
       <h3 class="tags-title">Tags</h3>
       <div class="tags-list">
-        <button 
+        <button
           *ngFor="let tag of todasTags"
           class="tag-item"
           [class.active]="tagsFiltradas.includes(tag)"
@@ -48,18 +48,18 @@
   <div class="main-content">
     <div class="notes-header">
       <h2 class="section-title">All Notes</h2>
-      
+
       <div class="header-actions">
-        <input 
-          type="text" 
+        <input
+          type="text"
           class="search-input"
           placeholder="Search by title, content, or tags..."
           [formControl]="termoBusca">
-        
+
         <button class="icon-button" (click)="ligarDesligarDarkMode()" title="Toggle Dark Mode">
           <fa-icon [icon]="darkMode ? faSun : faMoon"></fa-icon>
         </button>
-        
+
         <button class="icon-button" (click)="logout()" title="Logout">
            <fa-icon [icon]="faUser"></fa-icon>
         </button>
@@ -71,17 +71,25 @@
     </button>
 
     <div class="notes-list" *ngIf="notasFiltradas.length > 0">
-      <div 
+      <div
         *ngFor="let note of notasFiltradas"
         class="note-card"
         [class.selected]="notaSelecionada?.id === note.id"
         (click)="onNoteClick(note)">
-        
-        <img 
-          *ngIf="note.imagemUrl" 
-          [src]="note.imagemUrl" 
-          alt="Imagem da nota" 
-          class="note-card-banner">
+
+        <div *ngIf="note.imageUrl" class="note-card-banner-frame">
+          <img
+            *ngIf="!note.crop"
+            [src]="note.imageUrl"
+            alt=""
+            class="note-card-banner note-banner-contain">
+          <img
+            *ngIf="note.crop"
+            [src]="note.imageUrl"
+            alt=""
+            class="note-card-banner note-banner-cropped"
+            [ngStyle]="thumbCropStyle(note.crop)">
+        </div>
 
         <div class="note-card-content">
           <div class="note-card-header">
@@ -90,13 +98,13 @@
               <h3 class="note-title">{{ note.titulo }}</h3>
             </div>
           </div>
-          
+
           <div class="note-tags">
             <span *ngFor="let tag of note.tags" class="note-tag">
               {{ tag }}
             </span>
           </div>
-          
+
           <p class="note-date">{{ formatarData(note.dataEdicao) }}</p>
         </div>
       </div>
@@ -109,11 +117,11 @@
 
   <!-- Painel de detalhes/edição da nota -->
   <div class="note-details" *ngIf="notaSelecionada || modoCriacao">
-    
+
     <!-- Modo Visualização -->
     <ng-container *ngIf="!modoEdicao && !modoCriacao">
       <div class="note-detail-actions">
-        <button class="action-icon-btn" (click)="modoEdicao = true" title="Edit Note"><fa-icon [icon]="faPenToSquare"></fa-icon></button>
+        <button class="action-icon-btn" (click)="entrarModoEdicao()" title="Edit Note"><fa-icon [icon]="faPenToSquare"></fa-icon></button>
         <button class="action-icon-btn" title="Archive Note">
           <fa-icon [icon]="faBox"></fa-icon>
         </button>
@@ -122,11 +130,19 @@
         </button>
       </div>
 
-      <img 
-        *ngIf="notaSelecionada?.imagemUrl" 
-        [src]="notaSelecionada?.imagemUrl" 
-        alt="Imagem da nota selecionada" 
-        class="note-detail-banner">
+      <div *ngIf="notaSelecionada?.imageUrl" class="note-detail-banner-frame">
+        <img
+          *ngIf="!notaSelecionada?.crop"
+          [src]="notaSelecionada?.imageUrl"
+          alt=""
+          class="note-detail-banner note-banner-contain">
+        <img
+          *ngIf="notaSelecionada?.crop as cropDet"
+          [src]="notaSelecionada?.imageUrl"
+          alt=""
+          class="note-detail-banner note-banner-cropped"
+          [ngStyle]="thumbCropStyle(cropDet)">
+      </div>
 
       <div class="note-detail-content">
         <div class="note-detail-header">
@@ -167,8 +183,8 @@
 
         <div class="form-group">
           <label class="form-label">Title</label>
-          <input 
-            type="text" 
+          <input
+            type="text"
             class="form-input"
             placeholder="Note title"
             [formControl]="tituloControl">
@@ -176,25 +192,59 @@
 
         <div class="form-group">
           <label class="form-label">Tags (separated by commas)</label>
-          <input 
-            type="text" 
+          <input
+            type="text"
             class="form-input"
             placeholder="Dev, React, Personal..."
             [formControl]="tagsControl">
         </div>
 
-        <div class="form-group">
+        <div class="form-group" *ngIf="!mostrarAnexoImagem">
+          <button type="button" class="btn-secondary btn-anexar-imagem" (click)="revelarAnexoImagem()">
+            Anexar Imagem
+          </button>
+        </div>
+
+        <div class="form-group" *ngIf="mostrarAnexoImagem">
           <label class="form-label">Image URL (optional)</label>
-          <input 
-            type="text" 
+          <input
+            type="text"
             class="form-input"
             placeholder="https://example.com/image.jpg"
-            [formControl]="imagemUrlControl">
+            [formControl]="imageUrlControl"
+            (paste)="onImageUrlPaste($event)"
+            (blur)="onImageUrlBlur()">
+          <p class="erro-imagem" *ngIf="imageUrlErroMsg">{{ imageUrlErroMsg }}</p>
+
+          <div class="form-cropper-box" *ngIf="cropPreviewImageUrl">
+            <image-cropper
+              [imageURL]="cropPreviewImageUrl"
+              [maintainAspectRatio]="false"
+              format="png"
+              [autoCrop]="true"
+              (imageLoaded)="onCropImageLoaded($event)"
+              (cropperReady)="onCropperReady($event)"
+              (cropperChange)="onCropperChange($event)"
+              (imageCropped)="onImageCroppedDiag($event)">
+            </image-cropper>
+            <div *ngIf="modoEdicao || modoCriacao" class="crop-debug-panel">
+              <strong>DEBUG CROP:</strong><br>
+              - Imagem Original: {{ debugInfo.imageSize?.width }}x{{ debugInfo.imageSize?.height }}px<br>
+              - Pos. Bruta (pixels imagem): X1:{{ debugInfo.raw?.x1 }} | Y1:{{ debugInfo.raw?.y1 }}<br>
+              - Tela cropper (px): X1:{{ debugInfo.screenCrop?.x1 }} | Y1:{{ debugInfo.screenCrop?.y1 }}<br>
+              - Ratio: {{ debugInfo.ratio != null ? (debugInfo.ratio | number : '1.4-4') : '—' }}<br>
+              - Pos. Calculada (%): X:{{ debugInfo.calculated?.x }}% | Y:{{ debugInfo.calculated?.y }}%<br>
+              - Tamanho Crop (%): W:{{ debugInfo.calculated?.width }}% | H:{{ debugInfo.calculated?.height }}%<br>
+              <ng-container *ngIf="debugInfo.libraryRaw as lr">
+                <br>- Lib imagePosition: X1:{{ lr.x1 }} | Y1:{{ lr.y1 }}
+              </ng-container>
+            </div>
+          </div>
         </div>
 
         <div class="form-group">
           <label class="form-label">Content</label>
-          <textarea 
+          <textarea
             class="form-textarea"
             placeholder="Write your note content here..."
             [formControl]="conteudoControl"

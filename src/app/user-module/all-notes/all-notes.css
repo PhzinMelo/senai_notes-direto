@@ -36,13 +36,11 @@
 .logo-container {
   width: 40px;
   height: 40px;
-  
   border-radius: 8px;
   flex-shrink: 0;
   background-size: cover;
   background-position: center;
-  /* 🖼️ LOGO SENAI NOTES: Adicionar aqui */
-   background-image: url(../../../../public/imgs/Feather.svg); 
+  background-image: url(../../../../public/imgs/Feather.svg);
 }
 
 .app-title {
@@ -86,6 +84,10 @@
 
 .nav-icon {
   font-size: 18px;
+  width: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .nav-arrow {
@@ -139,7 +141,7 @@
   color: #f9ab00;
 }
 
-/* ========== LISTA DE NOTAS ========== */
+/* ========== LISTA DE NOTAS (MIDDLE PANEL) ========== */
 .main-content {
   background-color: #ffffff;
   overflow-y: auto;
@@ -148,14 +150,16 @@
 }
 
 .notes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 24px;
 }
 
 .section-title {
   font-size: 28px;
-  font-weight: 400;
-  margin: 0 0 16px 0;
-  color: #202124;
+  font-weight: 600;
+  color: #1a1a1a;
 }
 
 .header-actions {
@@ -165,10 +169,10 @@
 }
 
 .search-input {
-  flex: 1;
+  width: 300px;
   padding: 10px 16px;
-  border: 1px solid #dadce0;
-  border-radius: 24px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
   font-size: 14px;
   outline: none;
   transition: all 0.2s;
@@ -176,28 +180,28 @@
 
 .search-input:focus {
   border-color: #4285f4;
-  box-shadow: 0 1px 6px rgba(66, 133, 244, 0.2);
+  box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.1);
 }
 
 .icon-button {
   width: 40px;
   height: 40px;
+  border-radius: 8px;
   border: none;
-  background: transparent;
-  border-radius: 50%;
+  background-color: transparent;
+  color: #5f6368;
   cursor: pointer;
-  font-size: 20px;
-  transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s;
+  font-size: 18px;
 }
 
 .icon-button:hover {
   background-color: #f1f3f4;
 }
 
-/* Botão criar nota */
 .create-note-button {
   width: 100%;
   padding: 14px 20px;
@@ -208,16 +212,14 @@
   font-size: 15px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
   margin-bottom: 20px;
+  transition: all 0.2s;
 }
 
 .create-note-button:hover {
-  background-color: #1a73e8;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  background-color: #3367d6;
 }
 
-/* Lista de notas */
 .notes-list {
   display: flex;
   flex-direction: column;
@@ -225,39 +227,49 @@
 }
 
 .note-card {
-  display: flex;
-  flex-direction: column;
-  padding: 0;
   background-color: #ffffff;
   border: 1px solid #e0e0e0;
   border-radius: 12px;
+  overflow: hidden;
   cursor: pointer;
   transition: all 0.2s;
-  overflow: hidden;
 }
 
 .note-card:hover {
-  border-color: #4285f4;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-color: #d0d0d0;
 }
 
 .note-card.selected {
   border-color: #4285f4;
-  background-color: #f8fbff;
+  box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
 }
 
-/* Banner/Hero da nota no card */
-.note-card-banner {
+.note-card-banner-frame {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background: #f1f3f4;
   width: 100%;
-  height: 120px;
-  background-color: #f1f3f4;
-  background-size: cover;
-  background-position: center;
-  flex-shrink: 0;
-  /* 🖼️ BANNER DA NOTA NO CARD: Adicionar via [style.background-image] no HTML ou aqui */
+  height: 140px;
+}
 
+.note-card-banner-frame .note-banner-contain,
+.note-detail-banner-frame .note-banner-contain {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
 
+/* Recorte: dimensões vêm do [ngStyle]; só neutralizamos limites globais que quebram escala inversa */
+.note-card-banner-frame .note-banner-cropped,
+.note-detail-banner-frame .note-banner-cropped {
+  max-width: none !important;
+  max-height: none !important;
+  min-width: 0;
+  display: block !important;
+  object-fit: fill !important;
 }
 
 .note-card-content {
@@ -270,34 +282,40 @@
   gap: 12px;
   margin-bottom: 12px;
 }
+
+.note-card-icon {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
 .note-card-info {
   flex: 1;
-  min-width: 0;
 }
 
 .note-title {
   font-size: 16px;
   font-weight: 600;
-  margin: 0 0 4px 0;
-  color: #202124;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  color: #1a1a1a;
+  margin: 0;
+  line-height: 1.4;
 }
 
 .note-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .note-tag {
   padding: 4px 10px;
   background-color: #f1f3f4;
-  color: #5f6368;
   border-radius: 12px;
   font-size: 12px;
+  color: #5f6368;
   font-weight: 500;
 }
 
@@ -307,103 +325,107 @@
   margin: 0;
 }
 
-/* Estado vazio */
 .empty-state {
   text-align: center;
-  padding: 60px 40px;
-  color: #5f6368;
-  background-color: #f8f9fa;
-  border-radius: 12px;
-  margin-top: 20px;
-}
-
-.empty-state p {
-  font-size: 14px;
+  padding: 60px 20px;
+  color: #80868b;
+  font-size: 15px;
   line-height: 1.6;
-  margin: 0;
 }
 
-/* ========== DETALHES DA NOTA ========== */
+/* ========== PAINEL DE DETALHES (RIGHT PANEL) ========== */
 .note-details {
   background-color: #ffffff;
   overflow-y: auto;
-  padding: 0;
+  padding: 24px;
+  position: relative;
 }
 
-/* Botões de ação no topo */
 .note-detail-actions {
+  position: absolute;
+  top: 24px;
+  right: 24px;
   display: flex;
   gap: 8px;
-  justify-content: flex-end;
-  padding: 16px 32px;
-  border-bottom: 1px solid #e0e0e0;
+  z-index: 10;
 }
 
 .action-icon-btn {
-  width: 36px;
-  height: 36px;
-  border: 1px solid #dadce0;
-  background: white;
+  width: 44px;
+  height: 44px;
   border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  background-color: #ffffff;
+  color: #5f6368;
   cursor: pointer;
-  font-size: 16px;
-  transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s;
+  font-size: 18px;
 }
 
 .action-icon-btn:hover {
   background-color: #f8f9fa;
-  border-color: #5f6368;
+  border-color: #d0d0d0;
+}
+
+.action-icon-btn.danger {
+  color: #d93025;
 }
 
 .action-icon-btn.danger:hover {
   background-color: #fce8e6;
-  border-color: #d93025;
-  color: #d93025;
+  border-color: #f28b82;
 }
 
-/* Banner grande no topo */
-.note-detail-banner {
+.note-detail-banner-frame {
+  position: relative;
+  overflow: hidden;
+  background: #f1f3f4;
   width: 100%;
-  height: 200px;
-  background-color: #f1f3f4;
-  background-size: cover;
-  background-position: center;
-  /* 🖼️ BANNER GRANDE: Adicionar via [style.background-image] no HTML ou aqui */
+  height: 280px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  isolation: isolate;
 }
 
 .note-detail-content {
-  padding: 32px;
+  padding-top: 60px;
 }
 
 .note-detail-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 16px;
   margin-bottom: 24px;
 }
 
-
+.note-detail-icon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  flex-shrink: 0;
+}
 
 .note-detail-title {
   font-size: 32px;
-  font-weight: 400;
+  font-weight: 700;
+  color: #1a1a1a;
   margin: 0;
-  color: #202124;
+  line-height: 1.3;
   flex: 1;
 }
 
-/* Metadados */
 .note-metadata {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  margin-bottom: 32px;
   padding: 20px;
   background-color: #f8f9fa;
   border-radius: 12px;
+  margin-bottom: 24px;
 }
 
 .metadata-item {
@@ -414,6 +436,8 @@
 
 .metadata-icon {
   font-size: 18px;
+  width: 24px;
+  text-align: center;
 }
 
 .metadata-label {
@@ -425,7 +449,7 @@
 
 .metadata-value {
   font-size: 14px;
-  color: #202124;
+  color: #1a1a1a;
 }
 
 .metadata-tags {
@@ -435,37 +459,34 @@
 }
 
 .metadata-tag {
-  padding: 4px 10px;
-  background-color: #ffffff;
-  color: #5f6368;
-  border: 1px solid #e0e0e0;
-  border-radius: 12px;
-  font-size: 12px;
+  padding: 6px 12px;
+  background-color: #e8f0fe;
+  border-radius: 14px;
+  font-size: 13px;
+  color: #1967d2;
   font-weight: 500;
 }
 
 .content-title {
   font-size: 16px;
   font-weight: 600;
-  color: #5f6368;
-  margin: 0 0 16px 0;
+  color: #1a1a1a;
+  margin-bottom: 12px;
 }
 
 .note-content-text {
   font-size: 15px;
   line-height: 1.8;
-  color: #202124;
+  color: #3c4043;
   white-space: pre-wrap;
-  word-wrap: break-word;
-  margin-bottom: 32px;
 }
 
-/* ========== FORMULÁRIOS ========== */
+/* ========== FORMULÁRIO DE EDIÇÃO ========== */
 .form-section-title {
-  font-size: 24px;
-  font-weight: 500;
-  color: #202124;
-  margin: 0 0 24px 0;
+  font-size: 28px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 24px;
 }
 
 .form-group {
@@ -475,55 +496,57 @@
 .form-label {
   display: block;
   font-size: 14px;
-  font-weight: 500;
-  color: #5f6368;
+  font-weight: 600;
+  color: #3c4043;
   margin-bottom: 8px;
 }
 
 .form-input {
   width: 100%;
-  padding: 10px 12px;
+  padding: 12px 16px;
   border: 1px solid #dadce0;
   border-radius: 8px;
   font-size: 14px;
+  font-family: inherit;
   outline: none;
   transition: all 0.2s;
-  font-family: inherit;
+  background-color: #ffffff;
+  color: #1a1a1a;
 }
 
 .form-input:focus {
   border-color: #4285f4;
-  box-shadow: 0 1px 6px rgba(66, 133, 244, 0.2);
+  box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.1);
 }
 
 .form-textarea {
   width: 100%;
-  padding: 12px;
+  padding: 12px 16px;
   border: 1px solid #dadce0;
   border-radius: 8px;
-  font-size: 15px;
+  font-size: 14px;
   font-family: inherit;
-  line-height: 1.6;
   outline: none;
-  resize: vertical;
   transition: all 0.2s;
+  resize: vertical;
+  min-height: 200px;
+  background-color: #ffffff;
+  color: #1a1a1a;
 }
 
 .form-textarea:focus {
   border-color: #4285f4;
-  box-shadow: 0 1px 6px rgba(66, 133, 244, 0.2);
+  box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.1);
 }
 
 .form-actions {
   display: flex;
   gap: 12px;
-  justify-content: flex-end;
   margin-top: 24px;
 }
 
-/* Botões */
 .btn-primary {
-  padding: 10px 24px;
+  padding: 12px 24px;
   background-color: #4285f4;
   color: white;
   border: none;
@@ -535,12 +558,11 @@
 }
 
 .btn-primary:hover {
-  background-color: #1a73e8;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  background-color: #3367d6;
 }
 
 .btn-secondary {
-  padding: 10px 24px;
+  padding: 12px 24px;
   background-color: transparent;
   color: #5f6368;
   border: 1px solid #dadce0;
@@ -553,146 +575,329 @@
 
 .btn-secondary:hover {
   background-color: #f8f9fa;
-  border-color: #5f6368;
 }
 
-.btn-danger {
-  padding: 10px 24px;
-  background-color: transparent;
-  color: #d93025;
-  border: 1px solid #dadce0;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
+.btn-anexar-imagem {
+  margin-top: 0;
 }
 
-.btn-danger:hover {
-  background-color: #fce8e6;
-  border-color: #d93025;
-}
-
-/* ========== RESPONSIVIDADE ========== */
-@media (max-width: 1200px) {
-  .notes-container {
-    grid-template-columns: 240px 1fr 1fr;
-  }
-}
-
-@media (max-width: 768px) {
-  .notes-container {
-    grid-template-columns: 1fr;
-  }
-  
-  .sidebar {
-    display: none;
-  }
-  
-  .note-details {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 100;
-  }
-}
-.note-card-banner,
-.note-detail-banner {
+/* ========== IMAGEM ========== */
+.preview-imagem {
   width: 100%;
-  height: 200px; /* ajuste o tamanho conforme desejar */
-  object-fit: cover; /* cobre todo o espaço sem distorcer */
-  object-position: center; /* centraliza a imagem */
-  border-radius: 8px; /* opcional, cantos arredondados */
-  display: block;
-}
-::ng-deep body.dark-mode button,
-::ng-deep body.dark-mode .note-card,
-::ng-deep body.dark-mode .action-icon-btn,
-::ng-deep body.dark-mode .create-note-button
- {
-  background-color: #2b2d38 !important;
-  border: 1px solid #3a3c47 !important;
-  color: #e0e0e0 !important;
-  box-shadow: none !important;
-  outline: none !important;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-top: 10px;
+  border: 1px solid #e0e0e0;
 }
 
-::ng-deep body.dark-mode button:hover,
-::ng-deep body.dark-mode .note-card:hover,
-::ng-deep body.dark-mode .action-icon-btn:hover {
-  background-color: #323544 !important;
-  border-color: #4a4d5a !important;
+.erro-imagem {
+  color: #d93025;
+  font-size: 12px;
+  margin-top: 6px;
 }
 
-::ng-deep body.dark-mode button:active,
-::ng-deep body.dark-mode .note-card:active,
-::ng-deep body.dark-mode .action-icon-btn:active {
-  background-color: #1f2029 !important; /* sem flash branco */
-  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3) !important;
-  outline: none !important;
+.form-cropper-box {
+  max-width: 250px;
+  max-height: 250px;
+  margin-top: 10px;
+  overflow: hidden;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
 }
 
-/* Cores base de fundo e bordas */
-::ng-deep body.dark-mode .sidebar,
-::ng-deep body.dark-mode .main-content,
-::ng-deep body.dark-mode .search-input,
-::ng-deep body.dark-mode .note-details,
-::ng-deep body.dark-mode .note-metadata,
-::ng-deep body.dark-mode .metadata-tag,
-::ng-deep body.dark-mode  .notes-container,
-::ng-deep body.dark-mode .metadata-tag,
-::ng-deep body.dark-mode  .notes-container{
-  background-color: #232530 !important;
-  border-color: #3a3c47 !important;
+.crop-debug-panel {
+  background: #000;
+  color: #0f0;
+  padding: 10px;
+  font-family: monospace;
+  font-size: 11px;
+  margin-top: 10px;
+  border-radius: 5px;
 }
 
-/* Cards e blocos com leve destaque */
-::ng-deep body.dark-mode .note-card,
-::ng-deep body.dark-mode .note-metadata,
-::ng-deep body.dark-mode .note-detail-banner {
-  background-color: #2b2d38 !important;
-  border: 1px solid #3a3c47 !important;
+/* ========== DARK MODE ========== */
+::ng-deep body.dark-mode {
+  background-color: #1e1e1e;
 }
 
-/* Títulos e textos */
-::ng-deep body.dark-mode .app-title,
-::ng-deep body.dark-mode .nav-item,
-::ng-deep body.dark-mode .tags-title,
-::ng-deep body.dark-mode .tag-item,
-::ng-deep body.dark-mode .section-title,
-::ng-deep body.dark-mode .note-title,
-::ng-deep body.dark-mode .note-detail-title,
-::ng-deep body.dark-mode .content-title,
-::ng-deep body.dark-mode .note-content-text,
-::ng-deep body.dark-mode .metadata-label,
-::ng-deep body.dark-mode .metadata-value {
-  color: #f2f2f2 !important;
+::ng-deep body.dark-mode .notes-container {
+  background-color: #1e1e1e;
+  color: #e8eaed;
 }
 
-/* Ícones e detalhes */
-::ng-deep body.dark-mode .nav-icon,
-::ng-deep body.dark-mode .metadata-icon {
-  color: #c0c0c0 !important;
+::ng-deep body.dark-mode .sidebar {
+  background-color: #1f1f1f;
+  border-right-color: #3a3c47;
 }
 
-/* Input de busca no dark mode */
+::ng-deep body.dark-mode .sidebar-header {
+  border-bottom-color: #3a3c47;
+}
+
+::ng-deep body.dark-mode .app-title {
+  color: #e8eaed;
+}
+
+::ng-deep body.dark-mode .nav-item {
+  color: #9aa0a6;
+}
+
+::ng-deep body.dark-mode .nav-item:hover {
+  background-color: #2d2d33;
+}
+
+::ng-deep body.dark-mode .nav-item.active {
+  background-color: #2d3a52;
+  color: #8ab4f8;
+}
+
+::ng-deep body.dark-mode .tags-title {
+  color: #9aa0a6;
+}
+
+::ng-deep body.dark-mode .tag-item {
+  color: #9aa0a6;
+}
+
+::ng-deep body.dark-mode .tag-item:hover {
+  background-color: #2d2d33;
+}
+
+::ng-deep body.dark-mode .tag-item.active {
+  background-color: #3e3200;
+  color: #fdd663;
+}
+
+::ng-deep body.dark-mode .main-content {
+  background-color: #1e1e1e;
+  border-right-color: #3a3c47;
+}
+
+::ng-deep body.dark-mode .section-title {
+  color: #e8eaed;
+}
+
 ::ng-deep body.dark-mode .search-input {
-  background-color: #2b2d38 !important;
-  color: #f2f2f2 !important;
-  border: 1px solid #3a3c47 !important;
-}
-
-::ng-deep body.dark-mode .search-input::placeholder {
-  color: #9a9aa0 !important;
+  background-color: #2d2d33;
+  border-color: #3a3c47;
+  color: #e8eaed;
 }
 
 ::ng-deep body.dark-mode .search-input:focus {
-  border-color: #5a84f2 ;
-  box-shadow: 0 0 0 2px rgba(90, 132, 242, 0.2);
+  border-color: #8ab4f8;
+  box-shadow: 0 0 0 2px rgba(138, 180, 248, 0.1);
 }
-::ng-deep body.dark-mode .form-section-title{ 
-  color: white;
+
+::ng-deep body.dark-mode .search-input::placeholder {
+  color: #9aa0a6;
+}
+
+::ng-deep body.dark-mode .icon-button {
+  color: #9aa0a6;
+}
+
+::ng-deep body.dark-mode .icon-button:hover {
+  background-color: #2d2d33;
+}
+
+::ng-deep body.dark-mode .create-note-button {
+  background-color: #8ab4f8;
+  color: #1e1e1e;
+}
+
+::ng-deep body.dark-mode .create-note-button:hover {
+  background-color: #aecbfa;
+}
+
+::ng-deep body.dark-mode .note-card {
+  background-color: #2d2d33;
+  border-color: #3a3c47;
+}
+
+::ng-deep body.dark-mode .note-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border-color: #4a4c57;
+}
+
+::ng-deep body.dark-mode .note-card.selected {
+  border-color: #8ab4f8;
+  box-shadow: 0 0 0 2px rgba(138, 180, 248, 0.2);
+}
+
+::ng-deep body.dark-mode .note-card-banner-frame {
+  background: #2d2d33;
+}
+
+::ng-deep body.dark-mode .note-title {
+  color: #e8eaed;
+}
+
+::ng-deep body.dark-mode .note-tag {
+  background-color: #3a3c47;
+  color: #9aa0a6;
+}
+
+::ng-deep body.dark-mode .note-date {
+  color: #9aa0a6;
+}
+
+::ng-deep body.dark-mode .empty-state {
+  color: #9aa0a6;
+}
+
+::ng-deep body.dark-mode .note-details {
+  background-color: #1e1e1e;
+}
+
+::ng-deep body.dark-mode .action-icon-btn {
+  background-color: #2d2d33;
+  border-color: #3a3c47;
+  color: #9aa0a6;
+}
+
+::ng-deep body.dark-mode .action-icon-btn:hover {
+  background-color: #3a3c47;
+  border-color: #4a4c57;
+}
+
+::ng-deep body.dark-mode .action-icon-btn.danger {
+  color: #f28b82;
+}
+
+::ng-deep body.dark-mode .action-icon-btn.danger:hover {
+  background-color: #3a2828;
+  border-color: #5a3838;
+}
+
+::ng-deep body.dark-mode .note-detail-banner-frame {
+  background: #2d2d33;
+}
+
+::ng-deep body.dark-mode .note-detail-title {
+  color: #e8eaed;
+}
+
+::ng-deep body.dark-mode .note-metadata {
+  background-color: #2d2d33;
+}
+
+::ng-deep body.dark-mode .metadata-label {
+  color: #9aa0a6;
+}
+
+::ng-deep body.dark-mode .metadata-value {
+  color: #e8eaed;
+}
+
+::ng-deep body.dark-mode .metadata-tag {
+  background-color: #2d3a52;
+  color: #8ab4f8;
+}
+
+::ng-deep body.dark-mode .content-title {
+  color: #e8eaed;
+}
+
+::ng-deep body.dark-mode .note-content-text {
+  color: #bdc1c6;
+}
+
+::ng-deep body.dark-mode .form-section-title {
+  color: #e8eaed;
+}
+
+::ng-deep body.dark-mode .form-label {
+  color: #e8eaed;
+}
+
+::ng-deep body.dark-mode .form-input {
+  background-color: #2d2d33;
+  border-color: #3a3c47;
+  color: #e8eaed;
+}
+
+::ng-deep body.dark-mode .form-input:focus {
+  border-color: #8ab4f8;
+  box-shadow: 0 0 0 2px rgba(138, 180, 248, 0.1);
+}
+
+::ng-deep body.dark-mode .form-textarea {
+  background-color: #2d2d33;
+  border-color: #3a3c47;
+  color: #e8eaed;
+}
+
+::ng-deep body.dark-mode .form-textarea:focus {
+  border-color: #8ab4f8;
+  box-shadow: 0 0 0 2px rgba(138, 180, 248, 0.1);
+}
+
+::ng-deep body.dark-mode .btn-primary {
+  background-color: #8ab4f8;
+  color: #1e1e1e;
+}
+
+::ng-deep body.dark-mode .btn-primary:hover {
+  background-color: #aecbfa;
+}
+
+::ng-deep body.dark-mode .btn-secondary {
+  background-color: transparent;
+  color: #9aa0a6;
+  border-color: #3a3c47;
+}
+
+::ng-deep body.dark-mode .btn-secondary:hover {
+  background-color: #2d2d33;
+}
+
+::ng-deep body.dark-mode .preview-imagem {
+  border: 1px solid #3a3c47;
+}
+
+::ng-deep body.dark-mode .erro-imagem {
+  color: #f28b82;
+}
+
+::ng-deep body.dark-mode .form-cropper-box {
+  border-color: #3a3c47;
+}
+
+/* ========== SCROLLBAR ========== */
+.sidebar::-webkit-scrollbar,
+.main-content::-webkit-scrollbar,
+.note-details::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sidebar::-webkit-scrollbar-track,
+.main-content::-webkit-scrollbar-track,
+.note-details::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb,
+.main-content::-webkit-scrollbar-thumb,
+.note-details::-webkit-scrollbar-thumb {
+  background-color: #dadce0;
+  border-radius: 4px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover,
+.main-content::-webkit-scrollbar-thumb:hover,
+.note-details::-webkit-scrollbar-thumb:hover {
+  background-color: #bdc1c6;
+}
+
+::ng-deep body.dark-mode .sidebar::-webkit-scrollbar-thumb,
+::ng-deep body.dark-mode .main-content::-webkit-scrollbar-thumb,
+::ng-deep body.dark-mode .note-details::-webkit-scrollbar-thumb {
+  background-color: #3a3c47;
+}
+
+::ng-deep body.dark-mode .sidebar::-webkit-scrollbar-thumb:hover,
+::ng-deep body.dark-mode .main-content::-webkit-scrollbar-thumb:hover,
+::ng-deep body.dark-mode .note-details::-webkit-scrollbar-thumb:hover {
+  background-color: #4a4c57;
 }

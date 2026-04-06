@@ -32,7 +32,7 @@ export class NewUserNotes {
       ]],
       password: ["", [
         Validators.required,
-        Validators.minLength(8)
+        Validators.minLength(6)
       ]]
     });
 
@@ -82,7 +82,7 @@ export class NewUserNotes {
   // Valida a senha em tempo real
   onPasswordInput(event: Event): void {
     const input = event.target as HTMLInputElement;
-    this.passwordValid = input.value.length >= 8;
+    this.passwordValid = input.value.length >= 6;
   }
 
   async onSubmitReactive() {
@@ -129,8 +129,8 @@ export class NewUserNotes {
       this.passwordErrorMessage = "O campo de senha é obrigatório";
       return;
     }
-    if (password.length < 8) {
-      this.passwordErrorMessage = "A senha deve ter pelo menos 8 caracteres";
+    if (password.length < 6) {
+      this.passwordErrorMessage = "A senha deve ter pelo menos 6 caracteres";
       return;
     }
 
@@ -140,16 +140,16 @@ export class NewUserNotes {
     try {
       // Prepara o corpo da requisição
       const requestBody = {
-        
+        name:nome.trim(),
         email: email.trim(),
-        senha: password
+        password: password
       };
 
       console.log('Enviando para API:', requestBody);
       console.log('Body stringificado:', JSON.stringify(requestBody));
 
       // Envia os dados para a API
-      let response = await fetch("http://senainotes-g3edp.us-east-1.elasticbeanstalk.com/api/Usuarios/cadastrarUser", {
+      let response = await fetch("https://backend-senainotes.onrender.com/api/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -160,7 +160,7 @@ export class NewUserNotes {
       console.log("Status code: " + response.status);
 
       if (response.status >= 200 && response.status <= 299) {
-        this.sucessLogin = "Usuário criado com sucesso!";
+        this.sucessLogin = "Usuário criado com sucesso!";  
         this.errorLogin = "";
         let json = await response.json();
         console.log("Resposta da API:", json);
@@ -185,7 +185,7 @@ export class NewUserNotes {
         if (response.status === 409) {
           this.errorLogin = "Este e-mail já está cadastrado. Tente fazer login.";
         } else if (response.status === 400) {
-          this.errorLogin = errorData.error || "Dados inválidos. Verifique as informações.";
+          this.errorLogin = errorData.message || "Dados inválidos. Verifique as informações.";
         } else {
           this.errorLogin = "Erro ao criar usuário. Tente novamente.";
         }
