@@ -1,13 +1,47 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+/* ── WRAPPER GERAL ── */
+.app-wrapper {
+  position: relative;
+  min-height: 100dvh;
+}
+
 .notes-container {
   display: grid;
   grid-template-columns: 260px 1fr 1fr;
-  height: 100vh;
+  min-height: 100dvh;
   background-color: #ffffff;
   color: #1a1a1a;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-120px);
+  z-index: 9999;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  pointer-events: none;
+  opacity: 0;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.35s ease;
+  white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+.toast.success { background-color: #1e8e3e; color: #fff; }
+.toast.error   { background-color: #d93025; color: #fff; }
+.toast.warning { background-color: #f9ab00; color: #1a1a1a; }
 
 /* ── SIDEBAR ── */
 .sidebar {
@@ -86,13 +120,27 @@
 .tag-item.active { background-color: #fef7e0; color: #f9ab00; }
 
 /* ── LISTA DE NOTAS ── */
-.main-content { background-color: #ffffff; overflow-y: auto; padding: 24px; border-right: 1px solid #e0e0e0; }
+.main-content {
+  background-color: #ffffff;
+  overflow-y: auto;
+  padding: 24px;
+  border-right: 1px solid #e0e0e0;
+}
 
 .notes-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
 .section-title { font-size: 28px; font-weight: 600; color: #1a1a1a; }
 .header-actions { display: flex; gap: 12px; align-items: center; }
 
-.search-input { width: 300px; padding: 10px 16px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 14px; outline: none; transition: all 0.2s; }
+.search-input {
+  width: 100%;
+  max-width: 300px;
+  padding: 10px 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s;
+}
 .search-input:focus { border-color: #4285f4; box-shadow: 0 0 0 2px rgba(66,133,244,0.1); }
 
 .icon-button { width: 40px; height: 40px; border-radius: 8px; border: none; background-color: transparent; color: #5f6368; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-size: 18px; }
@@ -103,18 +151,11 @@
 
 .notes-list { display: flex; flex-direction: column; gap: 12px; }
 
+/* ── CARD DE NOTA ── */
 .note-card { background-color: #ffffff; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; cursor: pointer; transition: all 0.2s; }
 .note-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-color: #d0d0d0; }
 .note-card.selected { border-color: #4285f4; box-shadow: 0 0 0 2px rgba(66,133,244,0.2); }
 
-/*
- * Banner frame — SEM altura fixa.
- *
- * A propriedade aspect-ratio é aplicada via [style.aspect-ratio] no template,
- * usando o valor crop.ar gravado no momento do recorte.
- * O browser calcula H = W / ar automaticamente, mantendo a proporção.
- * overflow:hidden garante que nada vaze do frame.
- */
 .note-card-banner-frame {
   width: 100%;
   overflow: hidden;
@@ -124,7 +165,6 @@
 
 .note-card-banner-bg {
   background-color: #f1f3f4;
-  /* background-image + background-size + background-position vêm do CropStylePipe via [ngStyle] */
 }
 
 .note-card-banner-img {
@@ -154,12 +194,22 @@
 .action-icon-btn.danger { color: #d93025; }
 .action-icon-btn.danger:hover { background-color: #fce8e6; border-color: #f28b82; }
 
-/*
- * Banner do painel de detalhe — mesma estratégia de aspect-ratio do card.
- * Sem altura fixa; o AR vem de crop.ar via [style.aspect-ratio].
- * O painel é geralmente mais estreito que a tela cheia, então a imagem
- * cresce apenas na altura proporcional ao AR do recorte.
- */
+/* Botão de voltar (só mobile/tablet) */
+.btn-back {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  background: transparent;
+  border: none;
+  color: #4285f4;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-bottom: 12px;
+}
+.btn-back:hover { color: #3367d6; }
+
 .note-detail-banner-frame {
   width: 100%;
   overflow: hidden;
@@ -200,7 +250,7 @@
 .form-textarea { width: 100%; padding: 12px 16px; border: 1px solid #dadce0; border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; transition: all 0.2s; resize: vertical; min-height: 200px; background-color: #ffffff; color: #1a1a1a; }
 .form-textarea:focus { border-color: #4285f4; box-shadow: 0 0 0 2px rgba(66,133,244,0.1); }
 
-.form-actions { display: flex; gap: 12px; margin-top: 24px; }
+.form-actions { display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
 
 .btn-primary { padding: 12px 24px; background-color: #4285f4; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
 .btn-primary:hover { background-color: #3367d6; }
@@ -221,7 +271,6 @@
   position: relative;
 }
 
-/* ── Preview strip ── */
 .crop-preview-strip {
   display: flex;
   align-items: center;
@@ -231,11 +280,6 @@
 
 .crop-preview-label { font-size: 12px; color: #5f6368; white-space: nowrap; }
 
-/*
- * Thumbnail de preview: sem height fixa.
- * Usa [style.aspect-ratio]="draftCropPercent.ar" → mesmo contrato do card.
- * width fixo em 100px; height calculada automaticamente pelo browser.
- */
 .crop-preview-thumb {
   width: 100px;
   border-radius: 6px;
@@ -247,6 +291,228 @@
 .crop-preview-ar { font-size: 11px; color: #80868b; font-variant-numeric: tabular-nums; }
 
 .erro-imagem { color: #d93025; font-size: 12px; margin-top: 6px; }
+
+/* ── BOTTOM NAV (só mobile/tablet) ── */
+.bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background-color: #ffffff;
+  border-top: 1px solid #e0e0e0;
+  z-index: 500;
+  align-items: stretch;
+}
+
+.bottom-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #5f6368;
+  font-size: 11px;
+  font-family: inherit;
+  padding: 8px 4px;
+  transition: color 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.bottom-nav-item fa-icon,
+.bottom-nav-item .nav-icon-emoji { font-size: 20px; }
+.bottom-nav-item:hover { color: #4285f4; }
+.bottom-nav-item.active { color: #4285f4; font-weight: 600; }
+.bottom-nav-item.active fa-icon,
+.bottom-nav-item.active .nav-icon-emoji { filter: drop-shadow(0 0 2px rgba(66,133,244,0.4)); }
+
+/* ── FAB (só mobile/tablet) ── */
+.fab {
+  display: none;
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 28px;
+  background-color: #4285f4;
+  color: #fff;
+  border: none;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(66,133,244,0.4);
+  z-index: 510;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s, background-color 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.fab:hover { background-color: #3367d6; transform: scale(1.07); }
+.fab:active { transform: scale(0.95); }
+
+/* ── MOBILE HEADER (só mobile) ── */
+.mobile-header {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid #e0e0e0;
+  background: #ffffff;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.mobile-header .logo-container { width: 32px; height: 32px; }
+.mobile-header .app-title { font-size: 18px; font-weight: 600; flex: 1; }
+.mobile-search-bar {
+  padding: 8px 20px 12px;
+  border-bottom: 1px solid #e0e0e0;
+  background: #ffffff;
+  display: none;
+}
+.mobile-search-bar .search-input { max-width: 100%; }
+
+/* ── TABLET / MOBILE — RESPONSIVIDADE ── */
+@media (max-width: 1024px) {
+  .notes-container {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  /* Sidebar lateral escondida */
+  .sidebar { display: none; }
+
+  /* Barra de cima no desktop oculta em mobile, ajustes no header */
+  .notes-header { margin-bottom: 16px; }
+
+  /* Mostrar bottom nav e FAB */
+  .bottom-nav { display: flex; }
+  .fab { display: flex; }
+
+  /* Esconder botão criar nota inline (FAB substitui) */
+  .create-note-button { display: none; }
+
+  /* Padding inferior para não sobrepor bottom nav */
+  .main-content {
+    padding-bottom: 80px;
+    border-right: none;
+  }
+
+  /* Painel de detalhes: overlay full-screen */
+  .note-details {
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+    padding-bottom: 80px;
+    border-left: none;
+    overflow-y: auto;
+  }
+
+  /* Botão de voltar visível em mobile */
+  .btn-back { display: flex; }
+
+  /* Ajustar detail content sem o top-padding excessivo */
+  .note-detail-content { padding-top: 20px; }
+
+  /* Título menor */
+  .section-title { font-size: 22px; }
+  .note-detail-title { font-size: 26px; }
+  .form-section-title { font-size: 22px; }
+}
+
+@media (max-width: 1024px) and (min-width: 769px) {
+  /* Tablet: conteúdo centralizado com margem lateral */
+  .main-content { padding: 24px 32px 80px; }
+  .note-details  { padding: 24px 32px 80px; }
+
+  /* Card mais largo — mantém layout de banner em cima */
+  .note-card-content { padding: 16px 20px; }
+}
+
+@media (max-width: 768px) {
+  /* ── HEADER MOBILE ── */
+  .notes-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .header-actions {
+    width: 100%;
+    gap: 8px;
+  }
+
+  .search-input { max-width: 100%; flex: 1; }
+
+  /* ── CARD MOBILE: layout horizontal ── */
+  .note-card {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    border-radius: 10px;
+  }
+
+  /* Thumbnail à esquerda */
+  .note-card-banner-frame {
+    width: 72px !important;
+    min-height: 72px;
+    flex-shrink: 0;
+    aspect-ratio: 1 !important;
+    border-radius: 0 !important;
+    align-self: stretch;
+  }
+
+  /* Fallback img cover */
+  .note-card-banner-frame .note-card-banner-img {
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Conteúdo à direita */
+  .note-card-content {
+    padding: 12px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Esconde o ícone decorativo no mobile (thumbnail ocupa o papel) */
+  .note-card-icon { display: none; }
+
+  .note-card-header { margin-bottom: 6px; }
+  .note-title { font-size: 14px; }
+  .note-tag { font-size: 11px; padding: 3px 8px; }
+  .note-date { font-size: 12px; }
+
+  /* ── DETALHE ── */
+  .main-content { padding: 16px 16px 80px; }
+  .note-details  { padding: 16px 16px 80px; }
+
+  .note-detail-title { font-size: 22px; }
+  .note-metadata { padding: 14px; gap: 12px; }
+  .metadata-label { min-width: 60px; font-size: 12px; }
+  .metadata-value { font-size: 13px; }
+
+  /* ── FORM ── */
+  .form-actions { flex-direction: column; }
+  .btn-primary, .btn-secondary { width: 100%; text-align: center; }
+
+  /* ── SECTION TITLE ── */
+  .section-title { font-size: 20px; }
+  .form-section-title { font-size: 20px; }
+
+  /* ── EMPTY STATE ── */
+  .empty-state { padding: 40px 16px; font-size: 14px; }
+
+  /* ── CROPPER ── */
+  .form-cropper-box { max-width: 100%; height: 220px; }
+}
 
 /* ── DARK MODE ── */
 ::ng-deep body.dark-mode { background-color: #1e1e1e; }
@@ -303,11 +569,26 @@
 ::ng-deep body.dark-mode .btn-primary:hover { background-color: #aecbfa; }
 ::ng-deep body.dark-mode .btn-secondary { background-color: transparent; color: #9aa0a6; border-color: #3a3c47; }
 ::ng-deep body.dark-mode .btn-secondary:hover { background-color: #2d2d33; }
+::ng-deep body.dark-mode .btn-back { color: #8ab4f8; }
 ::ng-deep body.dark-mode .form-cropper-box { border-color: #3a3c47; background: #2d2d33; }
 ::ng-deep body.dark-mode .crop-preview-label { color: #9aa0a6; }
 ::ng-deep body.dark-mode .crop-preview-ar { color: #5f6368; }
 ::ng-deep body.dark-mode .crop-preview-thumb { border-color: #3a3c47; background-color: #2d2d33; }
 ::ng-deep body.dark-mode .erro-imagem { color: #f28b82; }
+
+/* Bottom Nav dark */
+::ng-deep body.dark-mode .bottom-nav { background-color: #1f1f1f; border-top-color: #3a3c47; }
+::ng-deep body.dark-mode .bottom-nav-item { color: #9aa0a6; }
+::ng-deep body.dark-mode .bottom-nav-item:hover { color: #8ab4f8; }
+::ng-deep body.dark-mode .bottom-nav-item.active { color: #8ab4f8; }
+
+/* FAB dark */
+::ng-deep body.dark-mode .fab { background-color: #8ab4f8; color: #1e1e1e; }
+::ng-deep body.dark-mode .fab:hover { background-color: #aecbfa; }
+
+/* Toast dark */
+::ng-deep body.dark-mode .toast.success { background-color: #188038; }
+::ng-deep body.dark-mode .toast.error   { background-color: #c5221f; }
 
 /* ── SCROLLBAR ── */
 .sidebar::-webkit-scrollbar, .main-content::-webkit-scrollbar, .note-details::-webkit-scrollbar { width: 8px; }

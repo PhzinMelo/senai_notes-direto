@@ -4,7 +4,9 @@ import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faTrash, faBox, faPenToSquare, faHouse, faUser, faMoon, faSun } from '@fortawesome/free-solid-svg-icons';
+import {
+  faTrash, faBox, faPenToSquare, faHouse, faUser, faMoon, faSun, faMagnifyingGlass,
+} from '@fortawesome/free-solid-svg-icons';
 import { ImageCropperComponent } from 'ngx-image-cropper';
 import type { CropperPosition, LoadedImage, Dimensions, ImageCroppedEvent } from 'ngx-image-cropper';
 import { CropStylePipe } from './crop-style.pipe';
@@ -12,12 +14,9 @@ import { CropStylePipe } from './crop-style.pipe';
 /**
  * ar = cropPixelWidth / cropPixelHeight
  *
- * Gravado no momento do crop (quando temos as dimensões reais da imagem).
- * Permite que o container adote exatamente o aspect-ratio do recorte via
- * [style.aspect-ratio]="crop.ar", tornando scaleX === scaleY no pipe e
- * eliminando toda distorção.
- *
- * Opcional para compatibilidade retroativa com notas sem ar salvo.
+ * Gravado no momento do crop. Permite que o container adote exatamente
+ * o aspect-ratio do recorte via [style.aspect-ratio]="crop.ar",
+ * tornando scaleX === scaleY no pipe (zero distorção).
  */
 export interface INotaCrop {
   x: number;
@@ -36,6 +35,7 @@ export interface INota {
   imageUrl?: string;
   crop?: INotaCrop;
   dataEdicao?: string;
+  archived?: boolean;
 }
 
 interface ApiSuccess<T> { success: boolean; message: string; data: T; }
@@ -48,7 +48,11 @@ interface NoteCreatePayload {
   crop?: INotaCrop;
 }
 
-/** Fallback para notas antigas sem ar salvo (equivale à altura 140px com ~280px de largura). */
+interface NoteArchivePayload {
+  archived: boolean;
+}
+
+/** Fallback para notas antigas sem ar salvo. */
 const FALLBACK_AR = 2.35;
 
 @Component({
@@ -61,6 +65,7 @@ const FALLBACK_AR = 2.35;
 export class AllNotes {
   faTrash = faTrash; faBox = faBox; faPenToSquare = faPenToSquare;
   faHouse = faHouse; faUser = faUser; faMoon = faMoon; faSun = faSun;
+  faMagnifyingGlass = faMagnifyingGlass;
 
   readonly fallbackAr = FALLBACK_AR;
 
@@ -92,7 +97,68 @@ export class AllNotes {
   darkMode = false;
   usuarioLogadoId = localStorage.getItem('meuId') || '';
 
+  // ── TOAST ──
+  toastMessage = '';
+  toastType: 'success' | 'error' | 'warning' = 'success';
+  private toastTimer?: ReturnType<typeof setTimeout>;
+
+  // ── MOBILE NAV STATES ──
+  mobileSearchActive = false;
+  mobileTagsActive   = false;
+
   constructor(private http: HttpClient, private cd: ChangeDetectorRef) {}
+
+  // ── TOAST ──────────────────────────────────────────────────────────────────
+
+  showToast(message: string, type: 'success' | 'error' | 'warning' = 'success'): void {
+    this.toastMessage = message;
+    this.toastType = type;
+    this.cd.detectChanges();
+    if (this.toastTimer) clearTimeout(this.toastTimer);
+    this.toastTimer = setTimeout(() => {
+      this.toastMessage = '';
+      this.cd.detectChanges();
+    }, 3000);
+  }
+
+  // ── MOBILE NAV ─────────────────────────────────────────────────────────────
+
+  irParaLista(): void {
+    this.viewMode = 'list';
+    this.notaSelecionada = null;
+    this.modoCriacao = false;
+    this.modoEdicao = false;
+    this.mobileSearchActive = false;
+    this.mobileTagsActive   = false;
+  }
+
+  irParaArquivadas(): void {
+    this.viewMode = 'archived';
+    this.notaSelecionada = null;
+    this.modoCriacao = false;
+    this.modoEdicao = false;
+    this.mobileSearchActive = false;
+  }
+
+  toggleMobileSearch(): void {
+    this.mobileSearchActive = !this.mobileSearchActive;
+    if (this.mobileSearchActive && !this.termoBusca.value)
+      setTimeout(() => document.querySelector<HTMLInputElement>('.search-input')?.focus(), 100);
+  }
+
+  toggleMobileTags(): void {
+    this.mobileTagsActive = !this.mobileTagsActive;
+  }
+
+  /** Fecha o painel de detalhe (botão "Back" no mobile). */
+  fecharDetalhe(): void {
+    this.notaSelecionada = null;
+    this.modoCriacao = false;
+    this.modoEdicao = false;
+    this.resetAnexoState();
+  }
+
+  // ── API ────────────────────────────────────────────────────────────────────
 
   private notesEndpoint = () => `${this.baseUrl}${this.notesPath}`;
 
@@ -122,6 +188,7 @@ export class AllNotes {
       tags: Array.isArray(raw['tags']) ? (raw['tags'] as string[]) : [],
       imageUrl: raw['imageUrl'] != null && String(raw['imageUrl']).trim() ? String(raw['imageUrl']).trim() : undefined,
       crop,
+      archived: Boolean(raw['archived'] ?? false),
       dataEdicao: raw['updatedAt'] != null ? String(raw['updatedAt'])
                 : raw['createdAt'] != null ? String(raw['createdAt']) : undefined,
     };
@@ -130,6 +197,8 @@ export class AllNotes {
   private clampPct(n: number, min = 0, max = 100): number {
     return Math.min(max, Math.max(min, Math.round(n * 100) / 100));
   }
+
+  // ── IMAGEM / CROPPER ───────────────────────────────────────────────────────
 
   looksLikeImageUrl(url: string): boolean {
     try { const u = new URL(url); return u.protocol === 'http:' || u.protocol === 'https:'; }
@@ -187,18 +256,6 @@ export class AllNotes {
     this.cropperDisplayMax = { width: dim.width, height: dim.height };
   }
 
-  /**
-   * Converte coordenadas do overlay do cropper (espaço do container visual)
-   * para percentuais do espaço da imagem real, e grava o ar do recorte.
-   *
-   * ar = rw / rh  (pixels reais da imagem).
-   *
-   * Prova que ar garante scaleX === scaleY no CropStylePipe:
-   *   containerH = containerW / ar = containerW × rh / rw
-   *   scaleX = containerW / rw   (via background-size)
-   *   scaleY = containerH / rh = (containerW × rh/rw) / rh = containerW / rw
-   *   → scaleX === scaleY ∴ sem distorção, independente do tamanho da imagem original.
-   */
   onCropperChange(event: CropperPosition): void {
     const dims = this.loadedImageForCrop;
     const max  = this.cropperDisplayMax;
@@ -224,10 +281,11 @@ export class AllNotes {
 
   onImageCroppedDiag(_ev: ImageCroppedEvent): void {}
 
-  /** Aspect-ratio efetivo para o banner, com fallback para notas antigas sem ar. */
   bannerAr(crop: INotaCrop | undefined): number {
     return crop?.ar ?? FALLBACK_AR;
   }
+
+  // ── LIFECYCLE ──────────────────────────────────────────────────────────────
 
   ngOnInit(): void {
     if (localStorage.getItem('darkmode') === 'true') {
@@ -237,16 +295,39 @@ export class AllNotes {
     void this.getNotas();
   }
 
+  // ── NOTAS ──────────────────────────────────────────────────────────────────
+
   async getNotas(): Promise<void> {
     try {
-      const url = `${this.notesEndpoint()}?page=1&limit=100&archived=false`;
-      const response = await firstValueFrom(
-        this.http.get<ApiSuccess<unknown[]>>(url, { headers: this.getHeaders() }),
-      );
-      if (!response.success || !Array.isArray(response.data)) return;
-      this.notas = response.data
-        .map(r => this.mapApiToNota(r as Record<string, unknown>))
-        .filter(n => n.usuarioId === this.usuarioLogadoId);
+      // Busca notas normais e arquivadas separadamente
+      const [resNormais, resArquivadas] = await Promise.all([
+        firstValueFrom(
+          this.http.get<ApiSuccess<unknown[]>>(
+            `${this.notesEndpoint()}?page=1&limit=100&archived=false`,
+            { headers: this.getHeaders() },
+          ),
+        ),
+        firstValueFrom(
+          this.http.get<ApiSuccess<unknown[]>>(
+            `${this.notesEndpoint()}?page=1&limit=100&archived=true`,
+            { headers: this.getHeaders() },
+          ),
+        ),
+      ]);
+
+      const normais = (resNormais.success && Array.isArray(resNormais.data))
+        ? resNormais.data.map(r => this.mapApiToNota(r as Record<string, unknown>))
+            .filter(n => n.usuarioId === this.usuarioLogadoId)
+            .map(n => ({ ...n, archived: false }))
+        : [];
+
+      const arquivadas = (resArquivadas.success && Array.isArray(resArquivadas.data))
+        ? resArquivadas.data.map(r => this.mapApiToNota(r as Record<string, unknown>))
+            .filter(n => n.usuarioId === this.usuarioLogadoId)
+            .map(n => ({ ...n, archived: true }))
+        : [];
+
+      this.notas = [...normais, ...arquivadas];
       this.extrairTodasTags();
       this.cd.detectChanges();
     } catch (error) { console.error('Erro ao carregar notas:', error); }
@@ -325,13 +406,19 @@ export class AllNotes {
     try {
       if (this.modoCriacao) {
         await firstValueFrom(this.http.post<ApiSuccess<unknown>>(this.notesEndpoint(), payload, { headers: this.getHeaders() }));
+        this.showToast('✓ Note created successfully!', 'success');
       } else if (this.notaSelecionada?.id) {
         await firstValueFrom(this.http.put<ApiSuccess<unknown>>(
           `${this.notesEndpoint()}/${this.notaSelecionada.id}`, payload, { headers: this.getHeaders() }));
+        this.showToast('✓ Note saved successfully!', 'success');
       }
       this.modoCriacao = false; this.modoEdicao = false;
+      this.notaSelecionada = null;
       await this.getNotas();
-    } catch (error) { console.error('Erro ao salvar nota:', error); alert('Não foi possível salvar a nota.'); }
+    } catch (error) {
+      console.error('Erro ao salvar nota:', error);
+      this.showToast('Failed to save note. Please try again.', 'error');
+    }
   }
 
   async deletarNota(): Promise<void> {
@@ -339,13 +426,61 @@ export class AllNotes {
     if (!confirm(`Deseja deletar a nota "${this.notaSelecionada.titulo}"?`)) return;
     try {
       await firstValueFrom(this.http.delete(`${this.notesEndpoint()}/${this.notaSelecionada.id}`, { headers: this.getHeaders() }));
+      this.showToast('✓ Note deleted successfully!', 'success');
       this.notaSelecionada = null;
       await this.getNotas();
-    } catch (error) { console.error('Erro ao deletar nota:', error); }
+    } catch (error) {
+      console.error('Erro ao deletar nota:', error);
+      this.showToast('Failed to delete note.', 'error');
+    }
   }
 
+  /**
+   * BUG FIX: Arquiva/desarquiva a nota selecionada.
+   * Envia PUT com { archived: true/false } para o backend.
+   * A nota sai da lista atual e vai para a outra aba.
+   */
+async arquivarNota(): Promise<void> {
+  if (!this.notaSelecionada?.id) return;
+
+  const isCurrentlyArchived = this.notaSelecionada.archived === true;
+  const confirmMsg = isCurrentlyArchived
+    ? `Deseja restaurar a nota "${this.notaSelecionada.titulo}"?`
+    : `Deseja arquivar a nota "${this.notaSelecionada.titulo}"?`;
+
+  if (!confirm(confirmMsg)) return;
+
+  try {
+    // ✅ CORRETO: PATCH no endpoint de toggle — não envia body
+    // O backend inverte o estado atual automaticamente
+    await firstValueFrom(
+      this.http.patch<ApiSuccess<unknown>>(
+        `${this.notesEndpoint()}/${this.notaSelecionada.id}/archive`,
+        {},                          // body vazio — o backend não precisa de nada
+        { headers: this.getHeaders() }
+      )
+    );
+
+    const msg = isCurrentlyArchived
+      ? '✓ Note restored successfully!'
+      : '✓ Note archived successfully!';
+
+    this.showToast(msg, 'success');
+    this.notaSelecionada = null;  // fecha o painel de detalhes
+    await this.getNotas();        // recarrega as listas
+  } catch (error) {
+    console.error('Erro ao arquivar/restaurar nota:', error);
+    this.showToast('Failed to archive/restore note.', 'error');
+  }
+}
+  // ── FILTROS ────────────────────────────────────────────────────────────────
+
   get notasFiltradas(): INota[] {
-    let notas = this.notas;
+    // Filtra por viewMode (archived vs normal)
+    let notas = this.notas.filter(n =>
+      this.viewMode === 'archived' ? n.archived === true : n.archived !== true
+    );
+
     const termo = this.termoBusca.value?.toLowerCase();
     if (termo)
       notas = notas.filter(n =>
@@ -361,6 +496,8 @@ export class AllNotes {
     const i = this.tagsFiltradas.indexOf(tag);
     if (i > -1) this.tagsFiltradas.splice(i, 1); else this.tagsFiltradas.push(tag);
   }
+
+  // ── UTILS ──────────────────────────────────────────────────────────────────
 
   formatarData(data?: string): string {
     if (!data) return '';

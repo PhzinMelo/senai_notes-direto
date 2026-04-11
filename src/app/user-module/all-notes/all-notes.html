@@ -1,234 +1,288 @@
-<div class="notes-container">
-  <!-- Sidebar -->
-  <div class="sidebar">
-    <div class="sidebar-header">
-      <div class="logo-container"></div>
-      <h1 class="app-title">Senai Notes</h1>
-    </div>
-    <nav class="sidebar-nav">
-      <button class="nav-item" [class.active]="viewMode === 'list'" (click)="viewMode = 'list'">
-        <span class="nav-icon"><fa-icon [icon]="faHouse"></fa-icon></span>
-        All Notes
-        <span class="nav-arrow">›</span>
-      </button>
-      <button class="nav-item" [class.active]="viewMode === 'archived'" (click)="viewMode = 'archived'">
-        <span class="nav-icon"><fa-icon [icon]="faBox"></fa-icon></span>
-        Archived Notes
-      </button>
-    </nav>
-    <div class="tags-section">
-      <h3 class="tags-title">Tags</h3>
-      <div class="tags-list">
-        <button *ngFor="let tag of todasTags" class="tag-item"
-                [class.active]="tagsFiltradas.includes(tag)" (click)="toggleTagFilter(tag)">
-          <span class="nav-icon">🏷️</span>{{ tag }}
-        </button>
-      </div>
-    </div>
+<div class="app-wrapper">
+
+  <!-- ── TOAST NOTIFICATION ── -->
+  <div class="toast"
+       [class.show]="toastMessage"
+       [class.success]="toastType === 'success'"
+       [class.error]="toastType === 'error'"
+       [class.warning]="toastType === 'warning'"
+       role="status" aria-live="polite">
+    {{ toastMessage }}
   </div>
 
-  <!-- Área principal -->
-  <div class="main-content">
-    <div class="notes-header">
-      <h2 class="section-title">All Notes</h2>
-      <div class="header-actions">
-        <input type="text" class="search-input"
-               placeholder="Search by title, content, or tags..."
-               [formControl]="termoBusca">
-        <button class="icon-button" (click)="ligarDesligarDarkMode()" title="Toggle Dark Mode">
-          <fa-icon [icon]="darkMode ? faSun : faMoon"></fa-icon>
+  <!-- ── LAYOUT PRINCIPAL ── -->
+  <div class="notes-container">
+
+    <!-- Sidebar (só desktop) -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-container"></div>
+        <h1 class="app-title">Senai Notes</h1>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="nav-item" [class.active]="viewMode === 'list'" (click)="viewMode = 'list'">
+          <span class="nav-icon"><fa-icon [icon]="faHouse"></fa-icon></span>
+          All Notes
+          <span class="nav-arrow">›</span>
         </button>
-        <button class="icon-button" (click)="logout()" title="Logout">
-          <fa-icon [icon]="faUser"></fa-icon>
+        <button class="nav-item" [class.active]="viewMode === 'archived'" (click)="viewMode = 'archived'">
+          <span class="nav-icon"><fa-icon [icon]="faBox"></fa-icon></span>
+          Archived Notes
         </button>
+      </nav>
+      <div class="tags-section">
+        <h3 class="tags-title">Tags</h3>
+        <div class="tags-list">
+          <button *ngFor="let tag of todasTags" class="tag-item"
+                  [class.active]="tagsFiltradas.includes(tag)" (click)="toggleTagFilter(tag)">
+            <span class="nav-icon">🏷️</span>{{ tag }}
+          </button>
+        </div>
       </div>
     </div>
 
-    <button class="create-note-button" (click)="criarNovaNota()">+ Create New Note</button>
+    <!-- ── ÁREA PRINCIPAL ── -->
+    <div class="main-content">
+      <div class="notes-header">
+        <h2 class="section-title">{{ viewMode === 'archived' ? 'Archived Notes' : 'All Notes' }}</h2>
+        <div class="header-actions">
+          <input type="text" class="search-input"
+                 placeholder="Search by title, content, or tags..."
+                 [formControl]="termoBusca">
+          <button class="icon-button" (click)="ligarDesligarDarkMode()" title="Toggle Dark Mode">
+            <fa-icon [icon]="darkMode ? faSun : faMoon"></fa-icon>
+          </button>
+          <button class="icon-button" (click)="logout()" title="Logout">
+            <fa-icon [icon]="faUser"></fa-icon>
+          </button>
+        </div>
+      </div>
 
-    <div class="notes-list" *ngIf="notasFiltradas.length > 0">
-      <div *ngFor="let note of notasFiltradas" class="note-card"
-           [class.selected]="notaSelecionada?.id === note.id"
-           (click)="onNoteClick(note)">
+      <!-- Botão criar — visível só no desktop -->
+      <button class="create-note-button" (click)="criarNovaNota()">+ Create New Note</button>
 
-        <!--
-          BANNER DO CARD
-          ─────────────────────────────────────────────────────────────────
-          [style.aspect-ratio]="bannerAr(note.crop)"
-            → o container adota exatamente o AR do recorte gravado em crop.ar
-            → scaleX e scaleY do CropStylePipe se tornam matematicamente iguais
-            → zero distorção, independente da imagem original ou largura do card
+      <!-- Lista de notas -->
+      <div class="notes-list" *ngIf="notasFiltradas.length > 0">
+        <div *ngFor="let note of notasFiltradas" class="note-card"
+             [class.selected]="notaSelecionada?.id === note.id"
+             (click)="onNoteClick(note)">
 
-          Notas sem crop.ar (criadas antes dessa versão) usam FALLBACK_AR (2.35).
-          Notas sem imagem não renderizam o frame.
-        -->
-        <ng-container *ngIf="note.imageUrl">
-          <div *ngIf="note.crop; else bannerCover"
-               class="note-card-banner-frame note-card-banner-bg"
-               [style.aspect-ratio]="bannerAr(note.crop)"
-               [ngStyle]="note.crop | cropStyle: note.imageUrl">
+          <!--
+            BANNER DO CARD
+            [style.aspect-ratio] → AR do recorte gravado em crop.ar
+            No mobile, CSS sobrescreve para aspect-ratio: 1 (thumbnail quadrado à esquerda)
+          -->
+          <ng-container *ngIf="note.imageUrl">
+            <div *ngIf="note.crop; else bannerCover"
+                 class="note-card-banner-frame note-card-banner-bg"
+                 [style.aspect-ratio]="bannerAr(note.crop)"
+                 [ngStyle]="note.crop | cropStyle: note.imageUrl">
+            </div>
+            <ng-template #bannerCover>
+              <div class="note-card-banner-frame" [style.aspect-ratio]="fallbackAr">
+                <img [src]="note.imageUrl" alt="" class="note-card-banner-img">
+              </div>
+            </ng-template>
+          </ng-container>
+
+          <div class="note-card-content">
+            <div class="note-card-header">
+              <div class="note-card-icon"></div>
+              <div class="note-card-info">
+                <h3 class="note-title">{{ note.titulo }}</h3>
+              </div>
+            </div>
+            <div class="note-tags">
+              <span *ngFor="let tag of note.tags" class="note-tag">{{ tag }}</span>
+            </div>
+            <p class="note-date">{{ formatarData(note.dataEdicao) }}</p>
           </div>
-          <ng-template #bannerCover>
-            <div class="note-card-banner-frame" [style.aspect-ratio]="fallbackAr">
-              <img [src]="note.imageUrl" alt="" class="note-card-banner-img">
+        </div>
+      </div>
+
+      <div class="empty-state" *ngIf="notasFiltradas.length === 0 && !modoCriacao">
+        <p *ngIf="viewMode === 'archived'">All your archived notes are stored here. You can restore or delete them anytime.</p>
+        <p *ngIf="viewMode !== 'archived'">You don't have any notes yet. Start a new note to capture your thoughts and ideas.</p>
+      </div>
+    </div>
+
+    <!-- ── PAINEL DE DETALHES / EDIÇÃO ── -->
+    <div class="note-details" *ngIf="notaSelecionada || modoCriacao">
+
+      <!-- ── MODO VISUALIZAÇÃO ── -->
+      <ng-container *ngIf="!modoEdicao && !modoCriacao">
+
+        <!-- Botão voltar (só mobile/tablet) -->
+        <button class="btn-back" (click)="fecharDetalhe()">
+          ‹ Back
+        </button>
+
+        <div class="note-detail-actions">
+          <button class="action-icon-btn" (click)="entrarModoEdicao()" title="Edit Note">
+            <fa-icon [icon]="faPenToSquare"></fa-icon>
+          </button>
+          <!-- BUG FIX: adicionado (click)="arquivarNota()" -->
+          <button class="action-icon-btn" (click)="arquivarNota()" title="Archive Note">
+            <fa-icon [icon]="faBox"></fa-icon>
+          </button>
+          <button class="action-icon-btn danger" (click)="deletarNota()" title="Delete Note">
+            <fa-icon [icon]="faTrash"></fa-icon>
+          </button>
+        </div>
+
+        <ng-container *ngIf="notaSelecionada?.imageUrl">
+          <div *ngIf="notaSelecionada?.crop; else detailCover"
+               class="note-detail-banner-frame note-detail-banner-bg"
+               [style.aspect-ratio]="bannerAr(notaSelecionada!.crop)"
+               [ngStyle]="notaSelecionada!.crop | cropStyle: notaSelecionada!.imageUrl">
+          </div>
+          <ng-template #detailCover>
+            <div class="note-detail-banner-frame" [style.aspect-ratio]="fallbackAr">
+              <img [src]="notaSelecionada?.imageUrl" alt="" class="note-detail-banner-img">
             </div>
           </ng-template>
         </ng-container>
 
-        <div class="note-card-content">
-          <div class="note-card-header">
-            <div class="note-card-icon"></div>
-            <div class="note-card-info">
-              <h3 class="note-title">{{ note.titulo }}</h3>
+        <div class="note-detail-content">
+          <div class="note-detail-header">
+            <div class="note-detail-icon"></div>
+            <h2 class="note-detail-title">{{ notaSelecionada?.titulo }}</h2>
+          </div>
+          <div class="note-metadata">
+            <div class="metadata-item">
+              <span class="metadata-icon">🏷️</span>
+              <span class="metadata-label">Tags</span>
+              <div class="metadata-tags">
+                <span *ngFor="let tag of notaSelecionada?.tags" class="metadata-tag">{{ tag }}</span>
+              </div>
+            </div>
+            <div class="metadata-item">
+              <span class="metadata-icon">🕐</span>
+              <span class="metadata-label">Last edited</span>
+              <span class="metadata-value">{{ formatarData(notaSelecionada?.dataEdicao) }}</span>
             </div>
           </div>
-          <div class="note-tags">
-            <span *ngFor="let tag of note.tags" class="note-tag">{{ tag }}</span>
-          </div>
-          <p class="note-date">{{ formatarData(note.dataEdicao) }}</p>
+          <h3 class="content-title">Content:</h3>
+          <div class="note-content-text">{{ getDescricao() }}</div>
         </div>
-      </div>
-    </div>
-
-    <div class="empty-state" *ngIf="notasFiltradas.length === 0 && !modoCriacao">
-      <p>You don't have any notes yet. Start a new note to capture your thoughts and ideas.</p>
-    </div>
-  </div>
-
-  <!-- Painel de detalhes/edição -->
-  <div class="note-details" *ngIf="notaSelecionada || modoCriacao">
-
-    <!-- ── MODO VISUALIZAÇÃO ── -->
-    <ng-container *ngIf="!modoEdicao && !modoCriacao">
-      <div class="note-detail-actions">
-        <button class="action-icon-btn" (click)="entrarModoEdicao()" title="Edit Note">
-          <fa-icon [icon]="faPenToSquare"></fa-icon>
-        </button>
-        <button class="action-icon-btn" title="Archive Note">
-          <fa-icon [icon]="faBox"></fa-icon>
-        </button>
-        <button class="action-icon-btn danger" (click)="deletarNota()" title="Delete Note">
-          <fa-icon [icon]="faTrash"></fa-icon>
-        </button>
-      </div>
-
-      <!--
-        Banner do painel de detalhe — mesma lógica de AR do card.
-        O painel de detalhe é mais largo; o container cresce verticalmente
-        de forma proporcional ao AR do recorte, sem distorção.
-      -->
-      <ng-container *ngIf="notaSelecionada?.imageUrl">
-        <div *ngIf="notaSelecionada?.crop; else detailCover"
-             class="note-detail-banner-frame note-detail-banner-bg"
-             [style.aspect-ratio]="bannerAr(notaSelecionada!.crop)"
-             [ngStyle]="notaSelecionada!.crop | cropStyle: notaSelecionada!.imageUrl">
-        </div>
-        <ng-template #detailCover>
-          <div class="note-detail-banner-frame" [style.aspect-ratio]="fallbackAr">
-            <img [src]="notaSelecionada?.imageUrl" alt="" class="note-detail-banner-img">
-          </div>
-        </ng-template>
       </ng-container>
 
-      <div class="note-detail-content">
-        <div class="note-detail-header">
-          <div class="note-detail-icon"></div>
-          <h2 class="note-detail-title">{{ notaSelecionada?.titulo }}</h2>
+      <!-- ── MODO CRIAÇÃO / EDIÇÃO ── -->
+      <ng-container *ngIf="modoEdicao || modoCriacao">
+
+        <!-- Botão voltar (só mobile/tablet) -->
+        <button class="btn-back" (click)="cancelar()">
+          ‹ Back
+        </button>
+
+        <div class="note-detail-actions">
+          <button class="action-icon-btn" (click)="cancelar()" title="Cancel">✖️</button>
         </div>
-        <div class="note-metadata">
-          <div class="metadata-item">
-            <span class="metadata-icon">🏷️</span>
-            <span class="metadata-label">Tags</span>
-            <div class="metadata-tags">
-              <span *ngFor="let tag of notaSelecionada?.tags" class="metadata-tag">{{ tag }}</span>
-            </div>
+
+        <div class="note-detail-content">
+          <h2 class="form-section-title">{{ modoCriacao ? 'Create New Note' : 'Edit Note' }}</h2>
+
+          <div class="form-group">
+            <label class="form-label">Title</label>
+            <input type="text" class="form-input" placeholder="Note title" [formControl]="tituloControl">
           </div>
-          <div class="metadata-item">
-            <span class="metadata-icon">🕐</span>
-            <span class="metadata-label">Last edited</span>
-            <span class="metadata-value">{{ formatarData(notaSelecionada?.dataEdicao) }}</span>
+
+          <div class="form-group">
+            <label class="form-label">Tags (separated by commas)</label>
+            <input type="text" class="form-input" placeholder="Dev, React, Personal..." [formControl]="tagsControl">
           </div>
-        </div>
-        <h3 class="content-title">Content:</h3>
-        <div class="note-content-text">{{ getDescricao() }}</div>
-      </div>
-    </ng-container>
 
-    <!-- ── MODO CRIAÇÃO / EDIÇÃO ── -->
-    <ng-container *ngIf="modoEdicao || modoCriacao">
-      <div class="note-detail-actions">
-        <button class="action-icon-btn" (click)="cancelar()" title="Cancel">✖️</button>
-      </div>
-      <div class="note-detail-content">
-        <h2 class="form-section-title">{{ modoCriacao ? 'Create New Note' : 'Edit Note' }}</h2>
+          <div class="form-group" *ngIf="!mostrarAnexoImagem">
+            <button type="button" class="btn-secondary" (click)="revelarAnexoImagem()">Anexar Imagem</button>
+          </div>
 
-        <div class="form-group">
-          <label class="form-label">Title</label>
-          <input type="text" class="form-input" placeholder="Note title" [formControl]="tituloControl">
-        </div>
+          <div class="form-group" *ngIf="mostrarAnexoImagem">
+            <label class="form-label">Image URL (optional)</label>
+            <input type="text" class="form-input"
+                   placeholder="https://example.com/image.jpg"
+                   [formControl]="imageUrlControl"
+                   (paste)="onImageUrlPaste($event)"
+                   (blur)="onImageUrlBlur()">
+            <p class="erro-imagem" *ngIf="imageUrlErroMsg">{{ imageUrlErroMsg }}</p>
 
-        <div class="form-group">
-          <label class="form-label">Tags (separated by commas)</label>
-          <input type="text" class="form-input" placeholder="Dev, React, Personal..." [formControl]="tagsControl">
-        </div>
+            <div class="form-cropper-box" *ngIf="cropPreviewImageUrl">
+              <image-cropper
+                [imageURL]="cropPreviewImageUrl"
+                [maintainAspectRatio]="false"
+                format="png"
+                [autoCrop]="true"
+                (imageLoaded)="onCropImageLoaded($event)"
+                (cropperReady)="onCropperReady($event)"
+                (cropperChange)="onCropperChange($event)"
+                (imageCropped)="onImageCroppedDiag($event)">
+              </image-cropper>
 
-        <div class="form-group" *ngIf="!mostrarAnexoImagem">
-          <button type="button" class="btn-secondary" (click)="revelarAnexoImagem()">Anexar Imagem</button>
-        </div>
-
-        <div class="form-group" *ngIf="mostrarAnexoImagem">
-          <label class="form-label">Image URL (optional)</label>
-          <input type="text" class="form-input"
-                 placeholder="https://example.com/image.jpg"
-                 [formControl]="imageUrlControl"
-                 (paste)="onImageUrlPaste($event)"
-                 (blur)="onImageUrlBlur()">
-          <p class="erro-imagem" *ngIf="imageUrlErroMsg">{{ imageUrlErroMsg }}</p>
-
-          <div class="form-cropper-box" *ngIf="cropPreviewImageUrl">
-            <image-cropper
-              [imageURL]="cropPreviewImageUrl"
-              [maintainAspectRatio]="false"
-              format="png"
-              [autoCrop]="true"
-              (imageLoaded)="onCropImageLoaded($event)"
-              (cropperReady)="onCropperReady($event)"
-              (cropperChange)="onCropperChange($event)"
-              (imageCropped)="onImageCroppedDiag($event)">
-            </image-cropper>
-
-            <!--
-              Preview do recorte em tempo real.
-              Usa o mesmo pipe e o ar recém calculado → preview sem distorção.
-            -->
-            <div class="crop-preview-strip" *ngIf="draftCropPercent">
-              <span class="crop-preview-label">Preview:</span>
-              <div class="crop-preview-thumb"
-                   [style.aspect-ratio]="draftCropPercent.ar ?? fallbackAr"
-                   [ngStyle]="draftCropPercent | cropStyle: cropPreviewImageUrl">
+              <div class="crop-preview-strip" *ngIf="draftCropPercent">
+                <span class="crop-preview-label">Preview:</span>
+                <div class="crop-preview-thumb"
+                     [style.aspect-ratio]="draftCropPercent.ar ?? fallbackAr"
+                     [ngStyle]="draftCropPercent | cropStyle: cropPreviewImageUrl">
+                </div>
+                <span class="crop-preview-ar">
+                  {{ (draftCropPercent.ar ?? fallbackAr) | number:'1.2-2' }}:1
+                </span>
               </div>
-              <span class="crop-preview-ar">
-                {{ (draftCropPercent.ar ?? fallbackAr) | number:'1.2-2' }}:1
-              </span>
             </div>
           </div>
-        </div>
 
-        <div class="form-group">
-          <label class="form-label">Content</label>
-          <textarea class="form-textarea"
-                    placeholder="Write your note content here..."
-                    [formControl]="conteudoControl"
-                    rows="15"></textarea>
-        </div>
+          <div class="form-group">
+            <label class="form-label">Content</label>
+            <textarea class="form-textarea"
+                      placeholder="Write your note content here..."
+                      [formControl]="conteudoControl"
+                      rows="15"></textarea>
+          </div>
 
-        <div class="form-actions">
-          <button class="btn-primary" (click)="salvarNota()">
-            {{ modoCriacao ? 'Create Note' : 'Save Changes' }}
-          </button>
-          <button class="btn-secondary" (click)="cancelar()">Cancel</button>
+          <div class="form-actions">
+            <button class="btn-primary" (click)="salvarNota()">
+              {{ modoCriacao ? 'Create Note' : 'Save Changes' }}
+            </button>
+            <button class="btn-secondary" (click)="cancelar()">Cancel</button>
+          </div>
         </div>
-      </div>
-    </ng-container>
-  </div>
-</div>
+      </ng-container>
+    </div>
+
+  </div><!-- /notes-container -->
+
+  <!-- ── FAB: criar nova nota (só mobile/tablet) ── -->
+  <button class="fab" (click)="criarNovaNota()" title="Create New Note" aria-label="Create New Note">+</button>
+
+  <!-- ── BOTTOM NAVIGATION (só mobile/tablet) ── -->
+  <nav class="bottom-nav" role="navigation" aria-label="Main navigation">
+    <button class="bottom-nav-item"
+            [class.active]="viewMode === 'list' && !notaSelecionada && !modoCriacao"
+            (click)="irParaLista()">
+      <fa-icon [icon]="faHouse"></fa-icon>
+      <span>Home</span>
+    </button>
+    <button class="bottom-nav-item"
+            [class.active]="mobileSearchActive"
+            (click)="toggleMobileSearch()">
+      <fa-icon [icon]="faMagnifyingGlass"></fa-icon>
+      <span>Search</span>
+    </button>
+    <button class="bottom-nav-item"
+            [class.active]="viewMode === 'archived'"
+            (click)="irParaArquivadas()">
+      <fa-icon [icon]="faBox"></fa-icon>
+      <span>Archived</span>
+    </button>
+    <button class="bottom-nav-item"
+            [class.active]="mobileTagsActive"
+            (click)="toggleMobileTags()">
+      <span class="nav-icon-emoji">🏷️</span>
+      <span>Tags</span>
+    </button>
+    <button class="bottom-nav-item" (click)="ligarDesligarDarkMode()">
+      <fa-icon [icon]="darkMode ? faSun : faMoon"></fa-icon>
+      <span>{{ darkMode ? 'Light' : 'Dark' }}</span>
+    </button>
+  </nav>
+
+</div><!-- /app-wrapper -->
