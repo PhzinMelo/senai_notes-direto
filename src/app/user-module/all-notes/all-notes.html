@@ -5,40 +5,23 @@
       <div class="logo-container"></div>
       <h1 class="app-title">Senai Notes</h1>
     </div>
-
     <nav class="sidebar-nav">
-      <button
-        class="nav-item"
-        [class.active]="viewMode === 'list'"
-        (click)="viewMode = 'list'">
-        <span class="nav-icon">
-          <fa-icon [icon]="faHouse"></fa-icon>
-        </span>
+      <button class="nav-item" [class.active]="viewMode === 'list'" (click)="viewMode = 'list'">
+        <span class="nav-icon"><fa-icon [icon]="faHouse"></fa-icon></span>
         All Notes
         <span class="nav-arrow">›</span>
       </button>
-
-      <button
-        class="nav-item"
-        [class.active]="viewMode === 'archived'"
-        (click)="viewMode = 'archived'">
-        <span class="nav-icon">
-          <fa-icon [icon]="faBox"></fa-icon>
-        </span>
+      <button class="nav-item" [class.active]="viewMode === 'archived'" (click)="viewMode = 'archived'">
+        <span class="nav-icon"><fa-icon [icon]="faBox"></fa-icon></span>
         Archived Notes
       </button>
     </nav>
-
     <div class="tags-section">
       <h3 class="tags-title">Tags</h3>
       <div class="tags-list">
-        <button
-          *ngFor="let tag of todasTags"
-          class="tag-item"
-          [class.active]="tagsFiltradas.includes(tag)"
-          (click)="toggleTagFilter(tag)">
-          <span class="nav-icon">🏷️</span>
-          {{ tag }}
+        <button *ngFor="let tag of todasTags" class="tag-item"
+                [class.active]="tagsFiltradas.includes(tag)" (click)="toggleTagFilter(tag)">
+          <span class="nav-icon">🏷️</span>{{ tag }}
         </button>
       </div>
     </div>
@@ -48,48 +31,49 @@
   <div class="main-content">
     <div class="notes-header">
       <h2 class="section-title">All Notes</h2>
-
       <div class="header-actions">
-        <input
-          type="text"
-          class="search-input"
-          placeholder="Search by title, content, or tags..."
-          [formControl]="termoBusca">
-
+        <input type="text" class="search-input"
+               placeholder="Search by title, content, or tags..."
+               [formControl]="termoBusca">
         <button class="icon-button" (click)="ligarDesligarDarkMode()" title="Toggle Dark Mode">
           <fa-icon [icon]="darkMode ? faSun : faMoon"></fa-icon>
         </button>
-
         <button class="icon-button" (click)="logout()" title="Logout">
-           <fa-icon [icon]="faUser"></fa-icon>
+          <fa-icon [icon]="faUser"></fa-icon>
         </button>
       </div>
     </div>
 
-    <button class="create-note-button" (click)="criarNovaNota()">
-      + Create New Note
-    </button>
+    <button class="create-note-button" (click)="criarNovaNota()">+ Create New Note</button>
 
     <div class="notes-list" *ngIf="notasFiltradas.length > 0">
-      <div
-        *ngFor="let note of notasFiltradas"
-        class="note-card"
-        [class.selected]="notaSelecionada?.id === note.id"
-        (click)="onNoteClick(note)">
+      <div *ngFor="let note of notasFiltradas" class="note-card"
+           [class.selected]="notaSelecionada?.id === note.id"
+           (click)="onNoteClick(note)">
 
-        <div *ngIf="note.imageUrl" class="note-card-banner-frame">
-          <img
-            *ngIf="!note.crop"
-            [src]="note.imageUrl"
-            alt=""
-            class="note-card-banner note-banner-contain">
-          <img
-            *ngIf="note.crop"
-            [src]="note.imageUrl"
-            alt=""
-            class="note-card-banner note-banner-cropped"
-            [ngStyle]="thumbCropStyle(note.crop)">
-        </div>
+        <!--
+          BANNER DO CARD
+          ─────────────────────────────────────────────────────────────────
+          [style.aspect-ratio]="bannerAr(note.crop)"
+            → o container adota exatamente o AR do recorte gravado em crop.ar
+            → scaleX e scaleY do CropStylePipe se tornam matematicamente iguais
+            → zero distorção, independente da imagem original ou largura do card
+
+          Notas sem crop.ar (criadas antes dessa versão) usam FALLBACK_AR (2.35).
+          Notas sem imagem não renderizam o frame.
+        -->
+        <ng-container *ngIf="note.imageUrl">
+          <div *ngIf="note.crop; else bannerCover"
+               class="note-card-banner-frame note-card-banner-bg"
+               [style.aspect-ratio]="bannerAr(note.crop)"
+               [ngStyle]="note.crop | cropStyle: note.imageUrl">
+          </div>
+          <ng-template #bannerCover>
+            <div class="note-card-banner-frame" [style.aspect-ratio]="fallbackAr">
+              <img [src]="note.imageUrl" alt="" class="note-card-banner-img">
+            </div>
+          </ng-template>
+        </ng-container>
 
         <div class="note-card-content">
           <div class="note-card-header">
@@ -98,13 +82,9 @@
               <h3 class="note-title">{{ note.titulo }}</h3>
             </div>
           </div>
-
           <div class="note-tags">
-            <span *ngFor="let tag of note.tags" class="note-tag">
-              {{ tag }}
-            </span>
+            <span *ngFor="let tag of note.tags" class="note-tag">{{ tag }}</span>
           </div>
-
           <p class="note-date">{{ formatarData(note.dataEdicao) }}</p>
         </div>
       </div>
@@ -115,13 +95,15 @@
     </div>
   </div>
 
-  <!-- Painel de detalhes/edição da nota -->
+  <!-- Painel de detalhes/edição -->
   <div class="note-details" *ngIf="notaSelecionada || modoCriacao">
 
-    <!-- Modo Visualização -->
+    <!-- ── MODO VISUALIZAÇÃO ── -->
     <ng-container *ngIf="!modoEdicao && !modoCriacao">
       <div class="note-detail-actions">
-        <button class="action-icon-btn" (click)="entrarModoEdicao()" title="Edit Note"><fa-icon [icon]="faPenToSquare"></fa-icon></button>
+        <button class="action-icon-btn" (click)="entrarModoEdicao()" title="Edit Note">
+          <fa-icon [icon]="faPenToSquare"></fa-icon>
+        </button>
         <button class="action-icon-btn" title="Archive Note">
           <fa-icon [icon]="faBox"></fa-icon>
         </button>
@@ -130,90 +112,77 @@
         </button>
       </div>
 
-      <div *ngIf="notaSelecionada?.imageUrl" class="note-detail-banner-frame">
-        <img
-          *ngIf="!notaSelecionada?.crop"
-          [src]="notaSelecionada?.imageUrl"
-          alt=""
-          class="note-detail-banner note-banner-contain">
-        <img
-          *ngIf="notaSelecionada?.crop as cropDet"
-          [src]="notaSelecionada?.imageUrl"
-          alt=""
-          class="note-detail-banner note-banner-cropped"
-          [ngStyle]="thumbCropStyle(cropDet)">
-      </div>
+      <!--
+        Banner do painel de detalhe — mesma lógica de AR do card.
+        O painel de detalhe é mais largo; o container cresce verticalmente
+        de forma proporcional ao AR do recorte, sem distorção.
+      -->
+      <ng-container *ngIf="notaSelecionada?.imageUrl">
+        <div *ngIf="notaSelecionada?.crop; else detailCover"
+             class="note-detail-banner-frame note-detail-banner-bg"
+             [style.aspect-ratio]="bannerAr(notaSelecionada!.crop)"
+             [ngStyle]="notaSelecionada!.crop | cropStyle: notaSelecionada!.imageUrl">
+        </div>
+        <ng-template #detailCover>
+          <div class="note-detail-banner-frame" [style.aspect-ratio]="fallbackAr">
+            <img [src]="notaSelecionada?.imageUrl" alt="" class="note-detail-banner-img">
+          </div>
+        </ng-template>
+      </ng-container>
 
       <div class="note-detail-content">
         <div class="note-detail-header">
           <div class="note-detail-icon"></div>
           <h2 class="note-detail-title">{{ notaSelecionada?.titulo }}</h2>
         </div>
-
         <div class="note-metadata">
           <div class="metadata-item">
             <span class="metadata-icon">🏷️</span>
             <span class="metadata-label">Tags</span>
             <div class="metadata-tags">
-              <span *ngFor="let tag of notaSelecionada?.tags" class="metadata-tag">
-                {{ tag }}
-              </span>
+              <span *ngFor="let tag of notaSelecionada?.tags" class="metadata-tag">{{ tag }}</span>
             </div>
           </div>
-
           <div class="metadata-item">
             <span class="metadata-icon">🕐</span>
             <span class="metadata-label">Last edited</span>
             <span class="metadata-value">{{ formatarData(notaSelecionada?.dataEdicao) }}</span>
           </div>
         </div>
-
         <h3 class="content-title">Content:</h3>
         <div class="note-content-text">{{ getDescricao() }}</div>
       </div>
     </ng-container>
 
+    <!-- ── MODO CRIAÇÃO / EDIÇÃO ── -->
     <ng-container *ngIf="modoEdicao || modoCriacao">
       <div class="note-detail-actions">
         <button class="action-icon-btn" (click)="cancelar()" title="Cancel">✖️</button>
       </div>
-
       <div class="note-detail-content">
         <h2 class="form-section-title">{{ modoCriacao ? 'Create New Note' : 'Edit Note' }}</h2>
 
         <div class="form-group">
           <label class="form-label">Title</label>
-          <input
-            type="text"
-            class="form-input"
-            placeholder="Note title"
-            [formControl]="tituloControl">
+          <input type="text" class="form-input" placeholder="Note title" [formControl]="tituloControl">
         </div>
 
         <div class="form-group">
           <label class="form-label">Tags (separated by commas)</label>
-          <input
-            type="text"
-            class="form-input"
-            placeholder="Dev, React, Personal..."
-            [formControl]="tagsControl">
+          <input type="text" class="form-input" placeholder="Dev, React, Personal..." [formControl]="tagsControl">
         </div>
 
         <div class="form-group" *ngIf="!mostrarAnexoImagem">
-          <button type="button" class="btn-secondary btn-anexar-imagem" (click)="revelarAnexoImagem()">
-            Anexar Imagem
-          </button>
+          <button type="button" class="btn-secondary" (click)="revelarAnexoImagem()">Anexar Imagem</button>
         </div>
 
         <div class="form-group" *ngIf="mostrarAnexoImagem">
           <label class="form-label">Image URL (optional)</label>
-          <input
-            type="text"
-            class="form-input"
-            placeholder="https://example.com/image.jpg"
-            [formControl]="imageUrlControl"
-            (paste)="onImageUrlPaste($event)"
-            (blur)="onImageUrlBlur()">
+          <input type="text" class="form-input"
+                 placeholder="https://example.com/image.jpg"
+                 [formControl]="imageUrlControl"
+                 (paste)="onImageUrlPaste($event)"
+                 (blur)="onImageUrlBlur()">
           <p class="erro-imagem" *ngIf="imageUrlErroMsg">{{ imageUrlErroMsg }}</p>
 
           <div class="form-cropper-box" *ngIf="cropPreviewImageUrl">
@@ -227,37 +196,37 @@
               (cropperChange)="onCropperChange($event)"
               (imageCropped)="onImageCroppedDiag($event)">
             </image-cropper>
-            <div *ngIf="modoEdicao || modoCriacao" class="crop-debug-panel">
-              <strong>DEBUG CROP:</strong><br>
-              - Imagem Original: {{ debugInfo.imageSize?.width }}x{{ debugInfo.imageSize?.height }}px<br>
-              - Pos. Bruta (pixels imagem): X1:{{ debugInfo.raw?.x1 }} | Y1:{{ debugInfo.raw?.y1 }}<br>
-              - Tela cropper (px): X1:{{ debugInfo.screenCrop?.x1 }} | Y1:{{ debugInfo.screenCrop?.y1 }}<br>
-              - Ratio: {{ debugInfo.ratio != null ? (debugInfo.ratio | number : '1.4-4') : '—' }}<br>
-              - Pos. Calculada (%): X:{{ debugInfo.calculated?.x }}% | Y:{{ debugInfo.calculated?.y }}%<br>
-              - Tamanho Crop (%): W:{{ debugInfo.calculated?.width }}% | H:{{ debugInfo.calculated?.height }}%<br>
-              <ng-container *ngIf="debugInfo.libraryRaw as lr">
-                <br>- Lib imagePosition: X1:{{ lr.x1 }} | Y1:{{ lr.y1 }}
-              </ng-container>
+
+            <!--
+              Preview do recorte em tempo real.
+              Usa o mesmo pipe e o ar recém calculado → preview sem distorção.
+            -->
+            <div class="crop-preview-strip" *ngIf="draftCropPercent">
+              <span class="crop-preview-label">Preview:</span>
+              <div class="crop-preview-thumb"
+                   [style.aspect-ratio]="draftCropPercent.ar ?? fallbackAr"
+                   [ngStyle]="draftCropPercent | cropStyle: cropPreviewImageUrl">
+              </div>
+              <span class="crop-preview-ar">
+                {{ (draftCropPercent.ar ?? fallbackAr) | number:'1.2-2' }}:1
+              </span>
             </div>
           </div>
         </div>
 
         <div class="form-group">
           <label class="form-label">Content</label>
-          <textarea
-            class="form-textarea"
-            placeholder="Write your note content here..."
-            [formControl]="conteudoControl"
-            rows="15"></textarea>
+          <textarea class="form-textarea"
+                    placeholder="Write your note content here..."
+                    [formControl]="conteudoControl"
+                    rows="15"></textarea>
         </div>
 
         <div class="form-actions">
           <button class="btn-primary" (click)="salvarNota()">
             {{ modoCriacao ? 'Create Note' : 'Save Changes' }}
           </button>
-          <button class="btn-secondary" (click)="cancelar()">
-            Cancel
-          </button>
+          <button class="btn-secondary" (click)="cancelar()">Cancel</button>
         </div>
       </div>
     </ng-container>
