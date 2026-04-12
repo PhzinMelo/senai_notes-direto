@@ -19,6 +19,9 @@ export class TelaLoginNotes implements OnInit {
   incorretoErrorMessage = '';
   isDarkMode = false;
 
+  // 👇 NOVO
+  passwordVisible = false;
+
   constructor(private fb: FormBuilder, private router: Router) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -29,11 +32,10 @@ export class TelaLoginNotes implements OnInit {
   ngOnInit(): void {
     const savedTheme = localStorage.getItem('theme');
 
-    // Define como padrão o modo claro
     if (savedTheme) {
       this.isDarkMode = savedTheme === 'dark';
     } else {
-      this.isDarkMode = false; // Começa no claro
+      this.isDarkMode = false;
       localStorage.setItem('theme', 'light');
     }
 
@@ -50,6 +52,10 @@ export class TelaLoginNotes implements OnInit {
     document.body.classList.toggle('dark-mode', this.isDarkMode);
   }
 
+  // 👇 NOVO
+  togglePassword(): void {
+    this.passwordVisible = !this.passwordVisible;
+  }
 
   async onLoginClick(): Promise<void> {
     if (this.loginForm.invalid) {
@@ -66,7 +72,6 @@ export class TelaLoginNotes implements OnInit {
     this.incorretoErrorMessage = '';
 
     const { email, password } = this.loginForm.value;
-    
 
     try {
       const response = await fetch('https://backend-senainotes.onrender.com/api/auth/login', {
@@ -77,15 +82,14 @@ export class TelaLoginNotes implements OnInit {
 
       const json = await response.json();
       if (response.ok) {
-        
         const meuToken = json.data?.token;
         const meuId = json.data?.user?.id;
 
-      localStorage.setItem('meuToken', meuToken ?? '');
-      if (meuId) localStorage.setItem('meuId', meuId);
+        localStorage.setItem('meuToken', meuToken ?? '');
+        if (meuId) localStorage.setItem('meuId', meuId);
 
         this.sucessoErrorMessage = 'Login realizado com sucesso!';
-        this.router.navigate(['/all-notes']); // ✅ redirecionamento correto
+        this.router.navigate(['/all-notes']);
       } else {
         this.incorretoErrorMessage = 'E-mail ou senha incorretos.';
       }
@@ -99,4 +103,3 @@ export class TelaLoginNotes implements OnInit {
     this.router.navigate(['/new-user-notes']);
   }
 }
- 

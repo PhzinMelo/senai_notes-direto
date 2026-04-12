@@ -1,65 +1,104 @@
-<div class="login-container">
-  <!-- Logo -->
-  <button class="theme-toggle" (click)="toggleTheme()" type="button">
-    <svg *ngIf="!isDarkMode" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-      <path
-        d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-      />
-    </svg>
-    <svg *ngIf="isDarkMode" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-      <path
-        d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-      />
-    </svg>
-  </button>
+<div class="fundo">
+  <div class="form-container">
 
-  <div class="logo-section">
-    <div class="logo"></div>
-    <h1 class="logo-text">Senai Notes</h1>
+    <!-- ===== Logo ===== -->
+    <div class="logo-section">
+      <div class="logo">
+
+        <!-- Substitua o comentário abaixo pelo caminho real do ícone -->
+        <!-- <img src="CAMINHO_DO_SEU_ICONE_AQUI" alt="Ícone Senai Notes" class="logo-icon" /> -->
+
+        <span class="logo-text">Senai Notes</span>
+
+        <div class="button-container">
+          <button type="button" class="dark-toggle" (click)="toggleTheme()">
+            <span class="icon">{{ isDarkMode ? '☀️' : '🌙' }}</span>
+            <span class="label">{{ isDarkMode ? 'Light Mode' : 'Dark Mode' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Título ===== -->
+    <h1 class="form-title">Welcome to Note</h1>
+    <p class="form-subtitle">Please log in to continue</p>
+
+    <!-- ===== Mensagem de sucesso ===== -->
+    <div *ngIf="sucessoErrorMessage" class="success-message">
+      {{ sucessoErrorMessage }}
+    </div>
+
+    <!-- ===== Mensagem de credenciais incorretas ===== -->
+    <div *ngIf="incorretoErrorMessage" class="error-message-global">
+      {{ incorretoErrorMessage }}
+    </div>
+
+    <!-- ===== Formulário Reativo ===== -->
+    <form [formGroup]="loginForm" (ngSubmit)="onLoginClick()">
+
+      <!-- Campo de E-mail -->
+      <div class="form-group">
+        <label for="email" class="form-label">Email Address</label>
+        <input
+          type="email"
+          id="email"
+          formControlName="email"
+          class="form-input"
+          [class.error]="emailErrorMessage !== ''"
+          placeholder="email@example.com"
+        />
+        <span *ngIf="emailErrorMessage" class="error-message">{{ emailErrorMessage }}</span>
+      </div>
+
+      <!-- Campo de Senha -->
+<div class="form-group">
+  <div class="form-label-row">
+    <label for="password" class="form-label">Password</label>
+    <a href="#" class="forgot-link">Forgot</a>
   </div>
 
-  <h2 class="welcome-title">Bem-vindo ao Notes</h2>
-  <p class="welcome-subtitle">Por favor, faça login para continuar</p>
+  <div class="password-container">
+    <input
+      [type]="passwordVisible ? 'text' : 'password'"
+      id="password"
+      formControlName="password"
+      class="form-input"
+      [class.error]="passwordErrorMessage !== ''"
+    />
 
-  <!-- Formulário -->
-  <form [formGroup]="loginForm" (ngSubmit)="onLoginClick()">
-    <div class="form-group">
-      <label class="form-label" for="email">Endereço de Email</label>
-      <input
-        type="email"
-        id="email"
-        formControlName="email"
-        class="form-input"
-        placeholder="email@example.com"
-      />
-      <div *ngIf="emailErrorMessage" class="error-message">{{ emailErrorMessage }}</div>
+    <!-- BOTÃO COM ÍCONE DINÂMICO -->
+    <button type="button" class="password-toggle" (click)="togglePassword()">
+
+      <!-- OLHO ABERTO -->
+      <svg *ngIf="passwordVisible" width="18" height="18" viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+        <circle cx="12" cy="12" r="3"/>
+      </svg>
+
+      <!-- OLHO FECHADO -->
+      <svg *ngIf="!passwordVisible" width="18" height="18" viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a21.77 21.77 0 0 1 5.06-5.94"/>
+        <path d="M1 1l22 22"/>
+      </svg>
+
+    </button>
+  </div>
+
+  <span *ngIf="passwordErrorMessage" class="error-message">
+    {{ passwordErrorMessage }}
+  </span>
+</div>
+      <!-- Botão de Login -->
+      <button type="submit" class="submit-button">Login</button>
+
+    </form>
+
+    <!-- ===== Link para cadastro ===== -->
+    <div class="signup-link">
+      No account yet? <a (click)="goToRegister()">Sign Up</a>
     </div>
 
-    <div class="form-group">
-      <label class="form-label" for="password">Senha</label>
-      <div class="password-group">
-        <input
-          type="password"
-          id="password"
-          formControlName="password"
-          class="form-input password-input"
-          placeholder="••••••••"
-        />
-      </div>
-      <div *ngIf="passwordErrorMessage" class="error-message">{{ passwordErrorMessage }}</div>
-      <div class="forgot-password">
-        <a href="#" class="forgot-link">Esqueceu Senha ?</a>
-      </div>
-    </div>
-
-    <button type="submit" class="login-btn">Login</button>
-
-    <div *ngIf="sucessoErrorMessage" class="success-message">{{ sucessoErrorMessage }}</div>
-    <div *ngIf="incorretoErrorMessage" class="error-message">{{ incorretoErrorMessage }}</div>
-  </form>
-
-  <div class="signup-section">
-    Ainda não tem uma conta ?
-    <a (click)="goToRegister()" class="signup-link"> Registra-se</a>
   </div>
 </div>
