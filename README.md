@@ -1,6 +1,9 @@
 # Senai Notes Frontend
 
 Frontend de um app estilo Notion para gerenciamento de notas e tarefas, com CRUD completo, autenticação e suporte a imagens responsivas dentro das notas.
+<img width="1365" height="612" alt="image" src="https://github.com/user-attachments/assets/8cc0f64a-1aa2-4c3e-ab2a-536129a374ba" />
+<img width="1366" height="612" alt="image" src="https://github.com/user-attachments/assets/09d127b2-100f-45fe-bbdb-04ed5fbdb70a" />
+
 
 O foco da experiência é produtividade com interface limpa: navegação rápida, filtros por tags, tema claro/escuro e renderização visual de imagens com recorte responsivo (sem processamento pesado no servidor).
 
@@ -16,11 +19,20 @@ O foco da experiência é produtividade com interface limpa: navegação rápida
 - Upload por URL com preview de imagem e recorte usando `ngx-image-cropper`
 - Exibição de imagem recortada via técnica `Container + Transform` para melhor performance visual
 
-## Integração com API
+## Navegação e Rotas (Frontend)
+O aplicativo foi estruturado utilizando o Angular Router para uma navegação fluida (Single Page Application). As principais rotas de acesso são:
 
+/login : Tela inicial da aplicação para autenticação de usuários já registrados.
+
+/new-user-notes : Tela de cadastro, onde novos usuários podem criar suas contas no sistema.
+
+/all-notes : Painel principal (Área Logada). É a interface central onde ocorre todo o CRUD de tarefas, visualização de imagens, filtros por tags e gerenciamento do status (arquivar/restaurar) das notas.
+
+## Integração com API
 O frontend consome a API remota:
 
 - Base URL: `https://backend-senainotes.onrender.com`
+- ⚠️ Nota importante: O backend está hospedado no plano gratuito do Render. Por conta disso, o servidor entra em modo de repouso após um período de inatividade. O primeiro carregamento (login ou cadastro) pode levar de 50 a 60 segundos para responder enquanto o serviço "desperta". Após esse primeiro acesso, a navegação flui normalmente.
 - Formato: JSON
 - Autenticação: Bearer Token no header `Authorization`
 
